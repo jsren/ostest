@@ -1,2 +1,30 @@
-# ostest
+# ostest (C) James S Renwick 2016
 Operating System Unit Test Framework
+
+This utility and all associated source code remains the property of James S Renwick.
+Commercial use is forbidden except where permission is explicitly granted.
+
+## Overview ##
+ostest is a relatively lightweight C++ unit testing framework based on Google Test.
+
+The framework has been designed such that it has absolutely no dependencies - not even on
+a particular standard library\*, nor does it in fact require any memory allocation whatsoever\*\*.
+
+
+
+\* Except a definition of `size_t`.
+\*\* Except where your compiler decides to emit it anyway.
+
+## Features ##
+ * Named unit tests
+ * Test suites
+ * Test suite setUp/tearDown for each test instance
+ * Unit test metadata accessible from within tests
+ * Basic assertions and GTest-style expectations
+ * Comprehensive test results available programatically
+ * Assertion result break-down for each test instance
+ * Test-complete callback
+ * Simple, clean syntax
+ * Compiles with GCC and VC++ (2015)
+ * Run/filter specific tests
+ * and more...
