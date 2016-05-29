@@ -13,7 +13,7 @@ a particular standard library\*, nor does it in fact require any memory allocati
 
 
 \* Except a definition of `size_t`.
-\*\* Except where your compiler decides to emit it anyway.
+\*\* Except where your compiler decides to emit it anyway. Set the OSTEST_NO_ALLOC preprocessor flag to disable allocation.
 
 ## Features ##
  * Named unit tests

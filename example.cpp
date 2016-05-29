@@ -1,5 +1,7 @@
 /* example.cpp - (c) James S Renwick 2016 */
 
+#define OSTEST_HANDLE_TEST_COMPLETE 1
+
 #include <cstdio>
 #include "ostest.h"
 
@@ -26,13 +28,13 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) 
     {
         const Assertion* assert = assertions.current();
 
-        if (assert == first && assert == final) printf("\t");
+        if (assert == first && assert == final) printf("  ONLY: ");
         else if (assert == first) printf(" FIRST: ");
         else if (assert == final) printf(" FINAL: ");
         else printf("\t");
 
-        printf("[%s] at %s:%i - \"%s\"\n", assert->passed() ? passStr : failStr, assert->file,
-            assert->line, assert->getMessage());
+        printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file, 
+		    assert->line, assert->expression);
     }
 
     // Newline separator
@@ -74,6 +76,9 @@ TEST(CustomSuite, TestWithWhileLoop)
     while (this->testInt > 0)
     {
         EXPECT_NONZERO(this->testInt);
+		
+		// This will fail to build when OSTEST_NO_ALLOC defined
+		EXPECT_ALL(this->testInt % 2 == 0);
 
         this->testInt--;
     }
@@ -88,7 +93,7 @@ TEST(CustomSuite, EmptyTest)
 
 namespace example
 {
-    OSTEST_TEST_SUITE(CustomSuite);
+    OSTEST_TEST_SUITE(CustomSuite)
 }
 
 TEST_EX(::example, CustomSuite, ScopedTest)

@@ -1,7 +1,5 @@
-/* ostest.h - (c) James S Renwick 2016 */
+/* ostest-impl.h - (c) James S Renwick 2016 */
 #pragma once
-
-#define OSTEST 1
 
 namespace ostest
 {
@@ -13,6 +11,11 @@ namespace ostest
     class Assertion;
     class AssertionEnumerator;
     class ITestWrapper;
+
+    // This must be provided by users
+    /* Method called when a test has completed execution. */
+    extern void handleTestComplete(const ostest::TestInfo& test,
+        const ostest::TestResult& result) noexcept;
 }
 
 namespace _ostest_internal
@@ -50,21 +53,28 @@ namespace ostest
     class Assertion
     {
         friend class AssertionEnumerator;
+        friend class TestResult;
 
     private:
         bool result;
         char* message;
 
         Assertion* nextItem;
+        Assertion* prevItem;
+        const bool temporary;
 
     public:
-        const char* file; // The file in which the assertion is made
-        const int line;   // The line at which the assertion is made
+        const char* expression; // The assertion expression
+        const char* file;       // The file in which the assertion is made
+        const int line;         // The line at which the assertion is made
 
     public:
         /* [internal] Creates (but does not register) a new Assertion instance. */
-        Assertion(const char* file = __FILE__, int line = __LINE__);
+        Assertion(const char* expression, const char* file = __FILE__, int line = __LINE__, bool temporary = false);
         virtual ~Assertion() { }
+
+    protected:
+        static constexpr const char* emptyMsg = "";
 
     public:
         /* Returns true if the assertion passed, false otherwise. */
@@ -72,7 +82,13 @@ namespace ostest
 
         /* Gets a description of the assertion outcome. */
         virtual const char* getMessage() const { 
-            return result ? "The assertion passed." : "The assertion failed."; 
+            return result ? emptyMsg : "The assertion failed."; 
+        }
+
+        /* Performs a deep-copy of the current assertion. */
+        virtual Assertion* clone() const
+        {
+            return new Assertion(*this);
         }
 
         /* Returns true if the assertion passed. False otherwise. */
@@ -98,11 +114,14 @@ namespace ostest
             item(first) { }
 
     public:
-        /* Selects the next test in the collection. Returns false if none available.
+        /* Selects the next assertion in the collection. Returns false if none available.
         Call next() before current(). */
         bool next();
 
-        /* Gets the next test in the collection. Call next() before accessing.
+        /* Selects the previous assertion in the collection. Returns false if none available. */
+        bool previous();
+
+        /* Gets the next assertion in the collection. Call next() before accessing.
         Returns nullptr if none available or end of collection reached. */
         inline const Assertion* current() const {
             return item;
@@ -113,6 +132,16 @@ namespace ostest
     class TestResult : private ::_ostest_internal::_LinkedList<Assertion>
     {
         friend class Assertion;
+
+#if !OSTEST_NO_ALLOC
+    private:
+        unsigned int* refCount;
+
+    public:
+        TestResult();
+        TestResult(const TestResult& copy);
+        ~TestResult();
+#endif
 
     public:
         /* Returns true if the test succeeded. False otherwise. */
@@ -142,7 +171,7 @@ namespace ostest
 
     public:
         TestRunner(const TestInfo& info) : info(info) { }
-        virtual ~TestRunner() { }
+        virtual ~TestRunner() = default;
 
     public:
         virtual TestResult run();
@@ -161,7 +190,7 @@ namespace ostest
         /* Creates (but does not register) a new Unit Test. */
         inline UnitTest(const TestInfo& info) : result(), info(&info) { }
     public:
-        virtual ~UnitTest() { };
+        virtual ~UnitTest() = default;
 
     protected:
         /* The Unit Test body. */
@@ -279,12 +308,12 @@ namespace _ostest_internal
         ::ostest::UnitTest& getTest() override
         {
             if (!alloc) newInstance();
-            return *reinterpret_cast<T*>(_data); 
+            return *reinterpret_cast<T*>(_data); // Ignore warnings here about type punning.
         }
         ::ostest::TestSuite& getSuite() override
         { 
             if (!alloc) newInstance();
-            return *reinterpret_cast<T*>(_data); 
+            return *reinterpret_cast<T*>(_data); // Ignore warnings here about type punning.
         }
 
         void newInstance() override
@@ -297,7 +326,7 @@ namespace _ostest_internal
 
         void deleteInstance() override
         {
-            if (alloc) reinterpret_cast<T*>(_data)->T::~T();
+            if (alloc) reinterpret_cast<T*>(_data)->T::~T(); // Ignore warnings here about type punning.
             alloc = false;
         }
     };
@@ -339,14 +368,6 @@ namespace _ostest_internal
     void _OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::testBody()
 
 
-/* [internal] Creates a new OSTest Unit Test Assertion. */
-#define _OSTEST_ASSERT_INT(id, expr, cls) { static cls _assertion ## id(__FILE__, __LINE__); \
-                                     if (! _assertion ## id .assert(*this, (expr))) return; }
-
-/* [internal] Creates a new OSTest Unit Test Expectation. */
-#define _OSTEST_EXPECT_INT(id, expr, cls) { static cls _assertion ## id(__FILE__, __LINE__); \
-                                     _assertion ## id .assert(*this, (expr)); }
-
 #pragma endregion
 
 
@@ -356,22 +377,13 @@ namespace _ostest_internal
 /* Creates a new OSTest Unit Test. */
 #define OSTEST_TEST_EX(suiteNamespace, suiteName, testName) _OSTEST_INTERNAL(suiteNamespace::suiteName, suiteName, testName)
 
-/* Creates a new OSTest Unit Test Assertion. */
-#define OSTEST_ASSERT(expr) _OSTEST_ASSERT_INT(__COUNT__, expr, Assertion)
-
-/* Creates a new OSTest Unit Test Expectation. */
-#define OSTEST_EXPECT(expr) _OSTEST_EXPECT_INT(__COUNT__, expr, Assertion)
-
 /* Creates a new OSTest Test Suite with empty setUp/tearDown. */
 #define OSTEST_TEST_SUITE(suiteName) class suiteName : public ::ostest::TestSuite { };
 
 
-#ifndef OSTEST_USE_PREFIX
+#if !OSTEST_MUST_PREFIX
 #define TEST(suiteName, testName) OSTEST_TEST(suiteName, testName)
 #define TEST_EX(suiteNamespace, suiteName, testName) OSTEST_TEST_EX(suiteNamespace, suiteName, testName)
 
 #define TEST_SUITE(suiteName) OSTEST_TEST_SUITE(suiteName)
-
-#define ASSERT(expr) OSTEST_ASSERT(expr)
-#define EXPECT(expr) OSTEST_EXPECT(expr)
 #endif

@@ -1,5 +1,5 @@
 /* ostest.cpp - (c) James S Renwick 2016 */
-#include "ostest.h"
+#include "ostest-impl.h"
 
 namespace ostest
 {
@@ -15,21 +15,36 @@ namespace ostest
     }
 
     // Creates a new assertion
-    Assertion::Assertion(const char* file, int line)
-        : result(true), message(nullptr), file(file), line(line) { }
+    Assertion::Assertion(const char* expr, const char* file, int line, bool tmp) : result(true), message(nullptr), 
+        nextItem(nullptr), prevItem(nullptr), temporary(tmp), expression(expr), file(file), line(line) { }
 
     bool Assertion::assert(UnitTest& test, bool result)
     {
-        // Reset state in case values already set by previous invocation
-        this->result   = result;
+        // Reset state in case values already set by previous invocation.
+        // (Linked list state should have been reset by TestResult destructor.)
+        this->result = result;
+
+        // This function always inserts the assertion at the end of the list.
+        // Thus if already present in list, update existing list pointers.
+        if (this->nextItem != nullptr) this->nextItem->prevItem = this->prevItem;
+        if (this->prevItem != nullptr) this->prevItem->nextItem = this->nextItem;
+
+        // Update first item
+        if (this->prevItem == nullptr && this->nextItem != nullptr) {
+            test.result.firstItem = this->nextItem; 
+        }
+
+        // Add to end of list
+        this->prevItem = nullptr;
         this->nextItem = nullptr;
 
-        // Update linked list
+        // Update list first and final pointers
         if (test.result.firstItem == nullptr) test.result.firstItem = this;
-
         if (test.result.finalItem != nullptr && test.result.finalItem != this) 
+        {
+            this->prevItem = test.result.finalItem;
             test.result.finalItem->nextItem = this;
-
+        }
         test.result.finalItem = this;
 
         return result;
@@ -38,14 +53,69 @@ namespace ostest
     bool AssertionEnumerator::next()
     {
         // Handle first element
-        if (initial) {
-            initial = false;
+        if (initial) 
+        {
+            initial = false; 
+            return item != nullptr;
         }
-        else if (item != nullptr) {
+        else if (item != nullptr && item->nextItem != nullptr)
+        {
             item = item->nextItem;
+            return true;
         }
-        return item != nullptr;
+        else return false;
     }
+
+    bool AssertionEnumerator::previous()
+    {
+        if (item != nullptr && item->prevItem)
+        {
+            item = item->prevItem;
+            return true;
+        }
+        else return false;
+    }
+
+#if !OSTEST_NO_ALLOC
+    TestResult::TestResult() : refCount(new unsigned int(1))
+    {
+
+    }
+
+    TestResult::TestResult(const TestResult& copy)
+    {
+        this->firstItem = copy.firstItem;
+        this->finalItem = copy.finalItem;
+        this->itemCount = copy.itemCount;
+        this->refCount  = copy.refCount;
+
+        (*refCount)++;
+    }
+
+    TestResult::~TestResult()
+    {
+        // This is the case upon move
+        if (this->refCount != nullptr)
+        {
+            this->refCount[0]--;
+
+            if (*this->refCount == 0)
+            {
+                Assertion *next = this->firstItem;
+                while (next != nullptr)
+                {
+                    Assertion* tmp = next->nextItem;
+
+                    // Delete or reset 
+                    if (next->temporary) delete next;
+                    else next->prevItem = next->nextItem = nullptr;
+
+                    next = tmp; // Return next assertion
+                }
+            }
+        }
+    }
+#endif
 
     bool TestResult::succeeded() const
     {
@@ -76,6 +146,7 @@ namespace ostest
         while (assertions.next()) {
             if (!assertions.current()->passed()) final = assertions.current();
         }
+
         return final;
     }
 
