@@ -1,7 +1,5 @@
 /* example.cpp - (c) James S Renwick 2016 */
 
-#define OSTEST_HANDLE_TEST_COMPLETE 1
-
 #include <cstdio>
 #include "ostest.h"
 
