@@ -10,6 +10,7 @@
 #include "ostest-impl.h"
 #include <exception>
 #include <stdexcept>
+#include <string>
 
 namespace ostest
 {

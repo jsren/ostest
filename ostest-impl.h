@@ -104,7 +104,7 @@ namespace ostest
 
 
     /* Object allowing assertion/expectation enumeration. */
-    struct AssertionEnumerator
+    class AssertionEnumerator
     {
     private:
         bool initial;
@@ -222,7 +222,7 @@ namespace ostest
     };
 
     /* Object allowing test enumeration. */
-    struct TestEnumerator
+    class TestEnumerator
     {
     private:
         bool initial;
