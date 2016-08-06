@@ -17,6 +17,12 @@
 #define OSTEST_MUST_PREFIX 0
 #endif
 
+/* Flag switching whether OSTEST handles C++ standard 
+   library exceptions. */
+#ifndef OSTEST_STD_EXCEPTIONS
+#define OSTEST_STD_EXCEPTIONS 0
+#endif
+
 /* */
 #ifdef assert
 #error "C assert macro not compatible with this library. Please undefine."

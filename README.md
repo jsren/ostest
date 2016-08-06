@@ -1,4 +1,4 @@
-# ostest (C) James S Renwick 2016
+# ostest (C) 2016 James S Renwick
 Operating System Unit Test Framework
 
 This utility and all associated source code remains the property of James S Renwick.
@@ -23,8 +23,9 @@ a particular standard library\*, nor does it in fact require any memory allocati
  * Basic assertions and GTest-style expectations
  * Comprehensive test results available programatically
  * Assertion result break-down for each test instance
+ * Standard library exception support!
  * Test-complete callback
  * Simple, clean syntax
- * Compiles with GCC and VC++ (2015)
+ * Cross-platform C++11
  * Run/filter specific tests
  * and more...

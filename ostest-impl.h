@@ -61,6 +61,8 @@ namespace ostest
 
         Assertion* nextItem;
         Assertion* prevItem;
+
+    protected:
         const bool temporary;
 
     public:
@@ -208,6 +210,9 @@ namespace ostest
     class TestSuite
     {
         friend class TestRunner;
+
+    public:
+        virtual ~TestSuite() = 0; // Make class abstract
 
     protected:
         /* Executed before unit test run. */

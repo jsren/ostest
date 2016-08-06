@@ -1,7 +1,8 @@
 /* example.cpp - (c) James S Renwick 2016 */
 
-#include <cstdio>
 #include "ostest.h"
+#include <cstdio>
+#include <cstring>
 
 using namespace ostest;
 
@@ -33,6 +34,12 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) 
 
         printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file, 
 		    assert->line, assert->expression);
+
+#if OSTEST_STD_EXCEPTIONS
+        if (strcmp(assert->expression, "<unhandled exception>") == 0) {
+            printf("\t   %s\n", assert->getMessage());
+        }
+#endif
     }
 
     // Newline separator
@@ -87,6 +94,17 @@ TEST(CustomSuite, EmptyTest)
 {
     
 }
+
+#if OSTEST_STD_EXCEPTIONS
+
+#include <stdexcept>
+
+TEST(CustomSuite, ExceptionTest)
+{
+    throw std::runtime_error("This is a test exception.");
+}
+
+#endif
 
 
 namespace example

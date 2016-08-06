@@ -1,8 +1,13 @@
 /* ostest.cpp - (c) James S Renwick 2016 */
 #include "ostest-impl.h"
+#include "ostest-exception.h"
 
 namespace ostest
 {
+    // Abstract base class
+    TestSuite::~TestSuite() { }
+
+
     // Tests for string equality
     bool streq(const char* s1, const char* s2)
     {
@@ -204,7 +209,32 @@ namespace ostest
 
         // Perform testing
         suite.setUp();
+
+#if OSTEST_STD_EXCEPTIONS
+        try {
+            test.testBody();
+        }
+        catch (const std::exception& e) {
+            (new NoExceptionAssertion(e, test.getInfo()))->assert(test, false);
+        }
+        // Please do not use 'new' when throwing exceptions!
+        // This will NOT free the exception. This is to avoid aborting later.
+        catch (const std::exception* e) {
+            (new NoExceptionAssertion(*e, test.getInfo()))->assert(test, false);
+        }
+        catch (const std::string& str) {
+            (new NoExceptionAssertion(std::runtime_error(str.c_str()), 
+                test.getInfo()))->assert(test, false);
+        }
+        catch (const char* msg) {
+            (new NoExceptionAssertion(std::runtime_error(msg), test.getInfo()))->assert(test, false);
+        }
+        catch (...) {
+            (new NoExceptionAssertion(std::exception(), test.getInfo()))->assert(test, false);
+        }
+#else
         test.testBody();
+#endif
         suite.tearDown();
 
         // Clean up
@@ -215,5 +245,55 @@ namespace ostest
         ::ostest::handleTestComplete(info, result);
         return result;
     }
+
+
+#if OSTEST_STD_EXCEPTIONS
+
+    static const char noexceptionMsg[] = "An unhandled exception occurred: ";
+
+    NoExceptionAssertion::NoExceptionAssertion(const std::exception& exception, 
+        const TestInfo& test, bool temp) : Assertion("<unhandled exception>", 
+            test.file, test.line, temp)
+    {
+        auto what = exception.what();
+
+        // Get exception message string length (up to 816)
+        unsigned long length = 0;
+        for (; length <= 816; length++) {
+            if (what[length] == '\0') break;
+        }
+
+        unsigned long msgIndex = 0;
+        auto msg = new char[sizeof(noexceptionMsg) + length];
+
+        // Copy message prefix
+        for (; msgIndex < sizeof(noexceptionMsg) - 1; msgIndex++) {
+            msg[msgIndex] = noexceptionMsg[msgIndex];
+        }
+        // Copy exception message
+        for (unsigned long i = 0; i < length + 1; i++, msgIndex++) {
+            msg[msgIndex] = what[i];
+        }
+        this->exceptionMsg = msg;
+    }
+
+    NoExceptionAssertion::~NoExceptionAssertion() {
+        if (this->exceptionMsg != nullptr) delete[] this->exceptionMsg;
+    }
+
+    NoExceptionAssertion::NoExceptionAssertion(NoExceptionAssertion&& other)
+        : Assertion(other.expression, other.file, other.line, other.temporary)
+    {
+        this->exceptionMsg = other.exceptionMsg;
+        other.exceptionMsg = nullptr;
+    }
+
+    const char* NoExceptionAssertion::getMessage() const
+    {
+        return this->exceptionMsg;
+    }
+
+#endif
+    
 
 }
