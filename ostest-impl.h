@@ -1,4 +1,4 @@
-/* ostest-impl.h - (c) James S Renwick 2016 */
+/* ostest-impl.h - (c) 2017 James S Renwick */
 #pragma once
 
 namespace ostest
@@ -303,35 +303,39 @@ namespace _ostest_internal
     {
     private:
         bool alloc;
-        alignas(alignof(T)) char _data[sizeof(T)];
+
+        union Data { 
+            alignas(alignof(T)) char _data[sizeof(T)]; T _obj;
+            inline Data() noexcept : _data() { } inline ~Data() { };
+        } data;
 
     public:
-        inline _TestWrapper() : alloc(false) { }
-        ~_TestWrapper() { deleteInstance(); }
+        inline _TestWrapper() : alloc(false) /*leave data uninitialised*/ { }
+        inline ~_TestWrapper() { deleteInstance(); }
 
     protected:
         ::ostest::UnitTest& getTest() override
         {
             if (!alloc) newInstance();
-            return *reinterpret_cast<T*>(_data); // Ignore warnings here about type punning.
+            return data._obj;
         }
         ::ostest::TestSuite& getSuite() override
         { 
             if (!alloc) newInstance();
-            return *reinterpret_cast<T*>(_data); // Ignore warnings here about type punning.
+            return data._obj;
         }
 
         void newInstance() override
         {
             if (alloc) deleteInstance();
 
-            new (_data) T();
+            new (data._data) T();
             alloc = true;
         }
 
         void deleteInstance() override
         {
-            if (alloc) reinterpret_cast<T*>(_data)->T::~T(); // Ignore warnings here about type punning.
+            if (alloc) return data._obj.T::~T();
             alloc = false;
         }
     };

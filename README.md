@@ -1,4 +1,4 @@
-# ostest (C) 2016 James S Renwick
+# ostest (C) 2017 James S Renwick
 Operating System Unit Test Framework
 
 This utility and all associated source code remains the property of James S Renwick.
@@ -29,3 +29,14 @@ a particular standard library\*, nor does it in fact require any memory allocati
  * Cross-platform C++11
  * Run/filter specific tests
  * and more...
+
+## Building ##
+
+### With make ###
+To build the library, run `make`.
+To build the example code, run `make example`.
+
+### With Visual Studio ###
+Include all .h and .cpp files in a project, build and run.
+
+The ostest library comprises all files except _example.cpp_
