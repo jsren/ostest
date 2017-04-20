@@ -46,3 +46,42 @@ To build the example code, run `make example`.
 
 ### With Visual Studio ###
 Include all .h and .cpp files in a project, build and run.
+
+## Example ##
+```
+#include "ostest.h"
+
+TEST_SUITE(ArithmeticSuite)
+
+// Unit tests are created with the TEST macro
+TEST(ArithmeticSuite, AdditionTest)
+{
+    // EXPECT statements log a condition and continue
+    EXPECT(1 + 1 == 2);
+    EXPECT_EQ(1 + 1, 2);
+    EXPECT_NONZERO(1 - 1);
+
+    // ASSERT statements log a condition and end the test if false
+    ASSERT(1 - 1 == 0);
+    ASSERT_ZERO(-1 + 1);
+
+    // Get test info
+    const auto& test = this->getInfo();
+    printf("Running test %s::%s (%s:%d)\n", test.suiteName, 
+        test.testName, test.file, test.line);
+
+    // Get current result info
+    const auto& result = this->getResult();
+    printf("Current result: %s\n", result.succeeded() ? "PASSING" : "FAILING");
+
+    const auto* fail = result.getFinalFailure();
+    if (fail) printf("Failed: '%s' (%s:%d)\n\n", fail->expression, fail->file, fail->line);
+}
+
+// Then to run:
+auto tests = ostest::getUnitTests();
+
+while (tests.next()) {
+    TestRunner(tests.current()).run();
+}
+```
