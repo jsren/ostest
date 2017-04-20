@@ -99,7 +99,7 @@ namespace ostest
         }
 
         /* [internal] Performs an assertion within the context of the given unit test. */
-        bool assert(UnitTest& test, bool expression);
+        bool evaluate(UnitTest& test, bool expression);
     };
 
 

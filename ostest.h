@@ -2,31 +2,24 @@
 #pragma once
 
 #define OSTEST_VERSION 1   // Major version number of ostest
-#define OSTEST_REVISION 2  // Revision number of ostest
+#define OSTEST_REVISION 3  // Revision number of ostest
 
 /* Flag switching whether OSTEST can use 'new/delete'.
-   When set, this must also be set when building ostest 
-   implementation files. */
-#ifndef OSTEST_NO_ALLOC
-#define OSTEST_NO_ALLOC 0
-#endif
+   When set, this must also be set when compiling ostest 
+   implementation files.
+*/
+//#define OSTEST_NO_ALLOC
 
 /* Flag switching whether OSTEST can define 'TEST' etc.
-   without the OSTEST_ prefix. */
-#ifndef OSTEST_MUST_PREFIX
-#define OSTEST_MUST_PREFIX 0
-#endif
+   without the OSTEST_ prefix. Can be set on a per-file basis.
+*/
+//#define OSTEST_MUST_PREFIX
 
 /* Flag switching whether OSTEST handles C++ standard 
-   library exceptions. */
-#ifndef OSTEST_STD_EXCEPTIONS
-#define OSTEST_STD_EXCEPTIONS 0
-#endif
-
-/* */
-#ifdef assert
-#error "C assert macro not compatible with this library. Please undefine."
-#endif
+   library exceptions. When set, this must also be set 
+   when compiling ostest implementation files.
+*/
+//#define OSTEST_STD_EXCEPTIONS
 
 #include "ostest-impl.h"
 #include "ostest-assert.h"

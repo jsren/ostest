@@ -6,21 +6,23 @@
 
 namespace _ostest_internal
 {
+#define _OSTEST_CONCAT(a, b) a ## b
+
 /* [internal] Creates a new OSTest Unit Test Assertion. */
-#define _OSTEST_ASSERT_INT(id, expr, cls) { static cls _assertion ## id(#expr, __FILE__, __LINE__); \
-                                     if (! _assertion ## id .assert(*this, (expr))) return; }
+#define _OSTEST_ASSERT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
+                                     if (! _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr))) return; }
 
 /* [internal] Creates a new OSTest Unit Test Expectation. */
-#define _OSTEST_EXPECT_INT(id, expr, cls) { static cls _assertion ## id(#expr, __FILE__, __LINE__); \
-                                     _assertion ## id .assert(*this, (expr)); }
+#define _OSTEST_EXPECT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
+                                     _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr)); }
 
 #if !OSTEST_NO_ALLOC
 
-#define _OSTEST_ASSERT_ALL_INT(id, expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
-                                        if (!_assert->assert(*this, (expr))) return; }
+#define _OSTEST_ASSERT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
+                                        if (!_assert->evaluate(*this, (expr))) return; }
 
-#define _OSTEST_EXPECT_ALL_INT(id, expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
-                                        _assert->assert(*this, (expr)); }
+#define _OSTEST_EXPECT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
+                                        _assert->evaluate(*this, (expr)); }
 
 #define _OSTEST_ASSERTION_DEF(name, successMsg, failMsg) \
     class _assert_ ## name : public ::ostest::Assertion \
@@ -40,9 +42,9 @@ namespace _ostest_internal
     };
 #else
 
-#define _OSTEST_ASSERT_ALL_INT(id, expr, cls) static_assert(false, "ASSERT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
+#define _OSTEST_ASSERT_ALL_INT(expr, cls) static_assert(false, "ASSERT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
 
-#define _OSTEST_EXPECT_ALL_INT(id, expr, cls) static_assert(false, "EXPECT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
+#define _OSTEST_EXPECT_ALL_INT(expr, cls) static_assert(false, "EXPECT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
 
 #define _OSTEST_ASSERTION_DEF(name, successMsg, failMsg) \
     class _assert_ ## name : public ::ostest::Assertion \
@@ -76,34 +78,34 @@ namespace _ostest_internal
 
 
 /* Creates a new OSTest Unit Test Assertion. */
-#define OSTEST_ASSERT(expr) _OSTEST_ASSERT_INT(__COUNT__, expr, ::ostest::Assertion)
+#define OSTEST_ASSERT(expr) _OSTEST_ASSERT_INT(__COUNTER__, expr, ::ostest::Assertion)
 /* Creates a new OSTest Unit Test Expectation. */
-#define OSTEST_EXPECT(expr) _OSTEST_EXPECT_INT(__COUNT__, expr, ::ostest::Assertion)
+#define OSTEST_EXPECT(expr) _OSTEST_EXPECT_INT(__COUNTER__, expr, ::ostest::Assertion)
 
 /* Creates a new OSTest Unit Test Assertion. */
-#define OSTEST_ASSERT_ALL(expr) _OSTEST_ASSERT_ALL_INT(__COUNT__, expr, ::ostest::Assertion)
+#define OSTEST_ASSERT_ALL(expr) _OSTEST_ASSERT_ALL_INT(expr, ::ostest::Assertion)
 /* Creates a new OSTest Unit Test Expectation. */
-#define OSTEST_EXPECT_ALL(expr) _OSTEST_EXPECT_ALL_INT(__COUNT__, expr, ::ostest::Assertion)
+#define OSTEST_EXPECT_ALL(expr) _OSTEST_EXPECT_ALL_INT(expr, ::ostest::Assertion)
 
-#define OSTEST_ASSERT_ZERO(expr)    _OSTEST_ASSERT_INT(__COUNT__, (expr) == 0, ::_ostest_internal::_assert_ze)
-#define OSTEST_ASSERT_NONZERO(expr) _OSTEST_ASSERT_INT(__COUNT__, (expr) != 0, ::_ostest_internal::_assert_nz)
+#define OSTEST_ASSERT_ZERO(expr)    _OSTEST_ASSERT_INT(__COUNTER__, (expr) == 0, ::_ostest_internal::_assert_ze)
+#define OSTEST_ASSERT_NONZERO(expr) _OSTEST_ASSERT_INT(__COUNTER__, (expr) != 0, ::_ostest_internal::_assert_nz)
 
-#define OSTEST_ASSERT_EQ(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNT__, (expr1) ==(expr2), ::_ostest_internal::_assert_eq)
-#define OSTEST_ASSERT_NEQ(expr1, expr2)  _OSTEST_ASSERT_INT(__COUNT__, (expr1) != (expr2), ::_ostest_internal::_assert_neq)
-#define OSTEST_ASSERT_LT(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNT__, (expr1) < (expr2), ::_ostest_internal::_assert_lt)
-#define OSTEST_ASSERT_GT(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNT__, (expr1) > (expr2), ::_ostest_internal::_assert_gt)
-#define OSTEST_ASSERT_LTEQ(expr1, expr2) _OSTEST_ASSERT_INT(__COUNT__, (expr1) <= (expr2), ::_ostest_internal::_assert_lte)
-#define OSTEST_ASSERT_GTEQ(expr1, expr2) _OSTEST_ASSERT_INT(__COUNT__, (expr1) >= (expr2),::_ostest_internal:: _assert_gte)
+#define OSTEST_ASSERT_EQ(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNTER__, (expr1) ==(expr2), ::_ostest_internal::_assert_eq)
+#define OSTEST_ASSERT_NEQ(expr1, expr2)  _OSTEST_ASSERT_INT(__COUNTER__, (expr1) != (expr2), ::_ostest_internal::_assert_neq)
+#define OSTEST_ASSERT_LT(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNTER__, (expr1) < (expr2), ::_ostest_internal::_assert_lt)
+#define OSTEST_ASSERT_GT(expr1, expr2)   _OSTEST_ASSERT_INT(__COUNTER__, (expr1) > (expr2), ::_ostest_internal::_assert_gt)
+#define OSTEST_ASSERT_LTEQ(expr1, expr2) _OSTEST_ASSERT_INT(__COUNTER__, (expr1) <= (expr2), ::_ostest_internal::_assert_lte)
+#define OSTEST_ASSERT_GTEQ(expr1, expr2) _OSTEST_ASSERT_INT(__COUNTER__, (expr1) >= (expr2),::_ostest_internal:: _assert_gte)
 
-#define OSTEST_EXPECT_ZERO(expr)    _OSTEST_EXPECT_INT(__COUNT__, (expr) == 0, ::_ostest_internal::_assert_ze)
-#define OSTEST_EXPECT_NONZERO(expr) _OSTEST_EXPECT_INT(__COUNT__, (expr) != 0, ::_ostest_internal::_assert_nz)
+#define OSTEST_EXPECT_ZERO(expr)    _OSTEST_EXPECT_INT(__COUNTER__, (expr) == 0, ::_ostest_internal::_assert_ze)
+#define OSTEST_EXPECT_NONZERO(expr) _OSTEST_EXPECT_INT(__COUNTER__, (expr) != 0, ::_ostest_internal::_assert_nz)
 
-#define OSTEST_EXPECT_EQ(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNT__, (expr1) == (expr2), ::_ostest_internal::_assert_eq)
-#define OSTEST_EXPECT_NEQ(expr1, expr2)  _OSTEST_EXPECT_INT(__COUNT__, (expr1) != (expr2), ::_ostest_internal::_assert_neq)
-#define OSTEST_EXPECT_LT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNT__, (expr1) < (expr2), ::_ostest_internal::_assert_lt)
-#define OSTEST_EXPECT_GT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNT__, (expr1) > expr2), ::_ostest_internal::_assert_gt)
-#define OSTEST_EXPECT_LTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNT__, (expr1) <= (expr2), ::_ostest_internal::_assert_lte)
-#define OSTEST_EXPECT_GTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNT__, (expr1) >= (expr2), ::_ostest_internal::_assert_gte)
+#define OSTEST_EXPECT_EQ(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) == (expr2), ::_ostest_internal::_assert_eq)
+#define OSTEST_EXPECT_NEQ(expr1, expr2)  _OSTEST_EXPECT_INT(__COUNTER__, (expr1) != (expr2), ::_ostest_internal::_assert_neq)
+#define OSTEST_EXPECT_LT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) < (expr2), ::_ostest_internal::_assert_lt)
+#define OSTEST_EXPECT_GT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) > expr2), ::_ostest_internal::_assert_gt)
+#define OSTEST_EXPECT_LTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNTER__, (expr1) <= (expr2), ::_ostest_internal::_assert_lte)
+#define OSTEST_EXPECT_GTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNTER__, (expr1) >= (expr2), ::_ostest_internal::_assert_gte)
 
 #if !OSTEST_MUST_PREFIX
 

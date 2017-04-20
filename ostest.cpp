@@ -23,7 +23,7 @@ namespace ostest
     Assertion::Assertion(const char* expr, const char* file, int line, bool tmp) : result(true), message(nullptr), 
         nextItem(nullptr), prevItem(nullptr), temporary(tmp), expression(expr), file(file), line(line) { }
 
-    bool Assertion::assert(UnitTest& test, bool result)
+    bool Assertion::evaluate(UnitTest& test, bool result)
     {
         // Reset state in case values already set by previous invocation.
         // (Linked list state should have been reset by TestResult destructor.)
@@ -215,22 +215,22 @@ namespace ostest
             test.testBody();
         }
         catch (const std::exception& e) {
-            (new NoExceptionAssertion(e, test.getInfo()))->assert(test, false);
+            (new NoExceptionAssertion(e, test.getInfo()))->evaluate(test, false);
         }
         // Please do not use 'new' when throwing exceptions!
         // This will NOT free the exception. This is to avoid aborting later.
         catch (const std::exception* e) {
-            (new NoExceptionAssertion(*e, test.getInfo()))->assert(test, false);
+            (new NoExceptionAssertion(*e, test.getInfo()))->evaluate(test, false);
         }
         catch (const std::string& str) {
             (new NoExceptionAssertion(std::runtime_error(str.c_str()), 
-                test.getInfo()))->assert(test, false);
+                test.getInfo()))->evaluate(test, false);
         }
         catch (const char* msg) {
-            (new NoExceptionAssertion(std::runtime_error(msg), test.getInfo()))->assert(test, false);
+            (new NoExceptionAssertion(std::runtime_error(msg), test.getInfo()))->evaluate(test, false);
         }
         catch (...) {
-            (new NoExceptionAssertion(std::exception(), test.getInfo()))->assert(test, false);
+            (new NoExceptionAssertion(std::exception(), test.getInfo()))->evaluate(test, false);
         }
 #else
         test.testBody();

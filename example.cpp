@@ -1,5 +1,4 @@
 /* example.cpp - (c) 2017 James S Renwick */
-
 #include "ostest.h"
 #include <cstdio>
 #include <cstring>
@@ -9,7 +8,7 @@ using namespace ostest;
 
 // Each unit test belongs to a test suite
 // Default test suites are created via a macro:
-OSTEST_TEST_SUITE(EmptySuite)
+TEST_SUITE(EmptySuite)
 
 // ...or can be created manually to enable overriding behaviour:
 class CustomSuite : public ::ostest::TestSuite
@@ -58,10 +57,11 @@ TEST(CustomSuite, TestWithWhileLoop)
         // EXPECT/ASSERT statements only log the condition from the final loop iteration 
         EXPECT_NONZERO(this->testInt);
         
+#if !OSTEST_NO_ALLOC
         // EXPECT_ALL/ASSERT_ALL will log the condition for all loop iterations.
-        // This will fail to build when OSTEST_NO_ALLOC defined.
+        // It requires memory allocation.
         EXPECT_ALL(this->testInt % 2 == 0);
-
+#endif
         this->testInt--;
     }
     ASSERT_NONZERO(this->testInt);
@@ -81,10 +81,10 @@ TEST(CustomSuite, ExceptionTest)
 
 
 
-// Test suites can be declared within namespaces
+// Test suites can be declared within namespaces...
 namespace exampleNS
 {
-    OSTEST_TEST_SUITE(CustomSuite)
+    TEST_SUITE(CustomSuite)
 }
 // ...but tests for these must be defined with TEST_EX
 TEST_EX(::exampleNS, CustomSuite, ScopedTest)
@@ -97,7 +97,6 @@ TEST_EX(::exampleNS, CustomSuite, ScopedTest)
 }
 
 
-#define _MAKE_STR(v) #v
 
 int main()
 {
