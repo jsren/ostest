@@ -52,6 +52,8 @@ TEST(EmptySuite, EmptyTest)
 
 TEST(CustomSuite, TestWithWhileLoop)
 {
+    ASSERT_NONZERO(this->testInt);
+    
     while (this->testInt > 0)
     {
         // EXPECT/ASSERT statements only log the condition from the final loop iteration 
@@ -64,20 +66,20 @@ TEST(CustomSuite, TestWithWhileLoop)
 #endif
         this->testInt--;
     }
-    ASSERT_NONZERO(this->testInt);
+    ASSERT_ZERO(this->testInt);
 }
 
 
-
-#if OSTEST_STD_EXCEPTIONS
-#include <stdexcept>
 
 // Unhandled exceptions during tests are logged and treated as a failed ASSERT
+#include <stdexcept>
 TEST(CustomSuite, ExceptionTest)
 {
-    throw std::runtime_error("This is a test exception.");
+    // Only throw if supported
+    if (ostest::ostest_std_exceptions) {
+        throw std::runtime_error("This is a test exception.");
+    }
 }
-#endif
 
 
 
@@ -105,6 +107,9 @@ int main()
     printf("ostest example application\n");
     printf("--------------------------------------\n");
     printf("Version %d.%d (c) 2017 James S Renwick\n", OSTEST_VERSION, OSTEST_REVISION);
+    printf("Built with: %s %s\n", 
+        ostest::ostest_no_alloc ? "OSTEST_NO_ALLOC" : "",
+        ostest::ostest_std_exceptions ? "OSTEST_STD_EXCEPTIONS" : "");
     printf("\n");
 
     // Gets all available unit tests
@@ -120,7 +125,7 @@ int main()
 
 
 // Called when a test has completed.
-void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) noexcept
+void ostest::handleTestComplete(const TestInfo& test, const TestResult& result)
 {
     static const char* passStr = "PASS";
     static const char* failStr = "FAIL";
@@ -147,11 +152,11 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) 
         printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file, 
             assert->line, assert->expression);
 
-#if OSTEST_STD_EXCEPTIONS
-        if (strcmp(assert->expression, "<unhandled exception>") == 0) {
-            printf("\t   %s\n", assert->getMessage());
+        if (ostest::ostest_std_exceptions) {
+            if (strcmp(assert->expression, "<unhandled exception>") == 0) {
+                printf("\t   %s\n", assert->getMessage());
+            }
         }
-#endif
     }
 
     // Newline separator

@@ -35,10 +35,12 @@ The ostest library comprises all source files except _example.cpp_ which is inte
 and can be built as a standalone executable.
 
 ### Preprocessor Flags ###
-The following preprocessor flags may be set when building your application:
+The following preprocessor flags may be set when building the ostest library:
  * Define `OSTEST_NO_ALLOC` to prevent ostest from allocating memory
- * Define `OSTEST_MUST_PREFIX` to only define the prefixed macros (e.g. `OSTEST_TEST` instead of `TEST`)
  * Define `OSTEST_STD_EXCEPTIONS` to enable C++ exception handling
+  
+The following preprocessor flags may be set when including the ostest headers:
+ * Define `OSTEST_MUST_PREFIX` to only define the prefixed macros (e.g. `OSTEST_TEST` instead of `TEST`)
 
 ### With make ###
 To build the library, run `make`.

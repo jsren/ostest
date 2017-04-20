@@ -15,7 +15,7 @@ namespace ostest
     // This must be provided by users
     /* Method called when a test has completed execution. */
     extern void handleTestComplete(const ostest::TestInfo& test,
-        const ostest::TestResult& result) noexcept;
+        const ostest::TestResult& result);
 }
 
 namespace _ostest_internal
@@ -46,6 +46,8 @@ namespace _ostest_internal
     template<typename T>
     unsigned long _StaticLinkedList<T>::itemCount = 0;
 
+    // Type used to select an overload when the object is heap-allocated
+    struct _heapalloc_tag { };
 }
 
 namespace ostest
@@ -56,11 +58,9 @@ namespace ostest
         friend class TestResult;
 
     private:
-        bool result;
-        char* message;
-
-        Assertion* nextItem;
-        Assertion* prevItem;
+        bool result = true;
+        Assertion* nextItem = nullptr;
+        Assertion* prevItem = nullptr;
 
     protected:
         const bool temporary;
@@ -72,7 +72,14 @@ namespace ostest
 
     public:
         /* [internal] Creates (but does not register) a new Assertion instance. */
-        Assertion(const char* expression, const char* file = __FILE__, int line = __LINE__, bool temporary = false);
+        Assertion(const char* expression, const char* file = __FILE__, 
+            int line = __LINE__, bool temporary = false);
+
+        /* [internal] Creates (but does not register) a new heap-allocated Assertion instance.
+           THIS IS NOT SUPPORTED IF OSTEST IS BUILT WITH OSTEST_NO_ALLOC. */        
+        Assertion(const char* expression, _ostest_internal::_heapalloc_tag, 
+            const char* file = __FILE__, int line = __LINE__, bool temporary = false);
+
         virtual ~Assertion() { }
 
     protected:
@@ -85,12 +92,6 @@ namespace ostest
         /* Gets a description of the assertion outcome. */
         virtual const char* getMessage() const { 
             return result ? emptyMsg : "The assertion failed."; 
-        }
-
-        /* Performs a deep-copy of the current assertion. */
-        virtual Assertion* clone() const
-        {
-            return new Assertion(*this);
         }
 
         /* Returns true if the assertion passed. False otherwise. */
@@ -134,15 +135,13 @@ namespace ostest
     {
         friend class Assertion;
 
-#if !OSTEST_NO_ALLOC
     private:
-        unsigned int* refCount;
+        unsigned int* refCount = nullptr;
 
     public:
         TestResult();
         TestResult(const TestResult& copy);
         ~TestResult();
-#endif
 
     public:
         /* Returns true if the test succeeded. False otherwise. */
@@ -339,8 +338,6 @@ namespace _ostest_internal
 }
 
 
-#pragma region Internal
-
 // Gets the internal class name for the new unit test
 #define _OSTEST_CLS_NAME(s,t) _test ## s ## t
 
@@ -373,8 +370,6 @@ namespace _ostest_internal
     \
     void _OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::testBody()
 
-
-#pragma endregion
 
 
 /* Creates a new OSTest Unit Test. */

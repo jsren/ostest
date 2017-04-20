@@ -8,21 +8,29 @@ namespace _ostest_internal
 {
 #define _OSTEST_CONCAT(a, b) a ## b
 
-/* [internal] Creates a new OSTest Unit Test Assertion. */
+/* [internal] Creates a new ostest Unit Test Assertion. */
 #define _OSTEST_ASSERT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
                                      if (! _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr))) return; }
 
-/* [internal] Creates a new OSTest Unit Test Expectation. */
+/* [internal] Creates a new ostest Unit Test Expectation. */
 #define _OSTEST_EXPECT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
                                      _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr)); }
 
 #if !OSTEST_NO_ALLOC
-
-#define _OSTEST_ASSERT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
+/* [internal] Creates a new ostest Unit Test Assertion. */
+#define _OSTEST_ASSERT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, _ostest_internal::_heapalloc_tag{}, __FILE__, __LINE__, true); \
                                         if (!_assert->evaluate(*this, (expr))) return; }
 
-#define _OSTEST_EXPECT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, __FILE__, __LINE__, true); \
+/* [internal] Creates a new ostest Unit Test Expectation. */
+#define _OSTEST_EXPECT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, _ostest_internal::_heapalloc_tag{}, __FILE__, __LINE__, true); \
                                         _assert->evaluate(*this, (expr)); }
+
+#else
+// Define macros as being unavailable if OSTEST_NO_ALLOC defined
+#define _OSTEST_ASSERT_ALL_INT(expr, cls) static_assert(false, "ASSERT_ALL unavailable when 'OSTEST_NO_ALLOC' defined.");
+#define _OSTEST_EXPECT_ALL_INT(expr, cls) static_assert(false, "EXPECT_ALL unavailable when 'OSTEST_NO_ALLOC' defined.");
+#endif
+
 
 #define _OSTEST_ASSERTION_DEF(name, successMsg, failMsg) \
     class _assert_ ## name : public ::ostest::Assertion \
@@ -33,32 +41,10 @@ namespace _ostest_internal
             : ::ostest::Assertion(expr, file, line, tmp) { } \
     \
     public: \
-        const char* getMessage() const override { \
-            return this->passed() ? emptyMsg : failMsg; \
-        } \
-        ::ostest::Assertion* clone() const override { \
-            return new _assert_ ## name(*this); \
-        } \
-    };
-#else
-
-#define _OSTEST_ASSERT_ALL_INT(expr, cls) static_assert(false, "ASSERT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
-
-#define _OSTEST_EXPECT_ALL_INT(expr, cls) static_assert(false, "EXPECT_ALL only available when 'OSTEST_CAN_ALLOC' defined.");
-
-#define _OSTEST_ASSERTION_DEF(name, successMsg, failMsg) \
-    class _assert_ ## name : public ::ostest::Assertion \
-    { \
-    public: \
-        inline _assert_ ## name(const char* expr, const char* file = __FILE__, int line = __LINE__, bool _ = false) \
-            : ::ostest::Assertion(expr, file, line, false) { } \
-    \
-    public: \
-        const char* getMessage() const override { \
+        const char* getMessage() const override final { \
             return this->passed() ? emptyMsg : failMsg; \
         } \
     };
-#endif
 
     _OSTEST_ASSERTION_DEF(ze,  "The value was zero.",        "Expected zero value.")
     _OSTEST_ASSERTION_DEF(nz,  "The value was non-zero.",    "Expected non-zero value.")

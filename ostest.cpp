@@ -1,15 +1,59 @@
 /* ostest.cpp - (c) 2017 James S Renwick */
 #include "ostest-impl.h"
-#include "ostest-exception.h"
+
+// Headers required for standard library exceptions
+#if OSTEST_STD_EXCEPTIONS
+#include <stdexcept>
+#include <string>
+#if OSTEST_NO_ALLOC
+#error Exception support requires allocation: cannot compile with both OSTEST_STD_EXCEPTIONS and OSTEST_NO_ALLOC.
+#endif
+#endif
 
 namespace ostest
 {
+    // Set feature flags
+#if OSTEST_STD_EXCEPTIONS
+    extern const bool ostest_std_exceptions = true;
+#else
+    extern const bool ostest_std_exceptions = false;
+#endif
+#if OSTEST_NO_ALLOC
+    extern const bool ostest_no_alloc = true;
+#else
+    extern const bool ostest_no_alloc = false;
+#endif
+
+
+#if OSTEST_STD_EXCEPTIONS
+
+    /* Class representing an assertion that an exception has not been thrown. */
+    class NoExceptionAssertion : public Assertion
+    {
+    private:
+        const char* exceptionMsg;
+    public:
+        explicit NoExceptionAssertion(const std::exception& exception, 
+            const TestInfo& test, bool temp=true);
+        virtual ~NoExceptionAssertion();
+
+        NoExceptionAssertion(NoExceptionAssertion&& other);
+        NoExceptionAssertion(const NoExceptionAssertion& other) = delete;
+        NoExceptionAssertion& operator=(const NoExceptionAssertion& other) = delete;
+
+    public:
+        /* Gets the exception message. */
+        virtual const char* getMessage() const override;
+    };
+#endif
+
+
     // Abstract base class
     TestSuite::~TestSuite() { }
 
 
     // Tests for string equality
-    bool streq(const char* s1, const char* s2)
+    static bool streq(const char* s1, const char* s2)
     {
         for (unsigned long int i = 0; ; i++)
         {
@@ -20,8 +64,15 @@ namespace ostest
     }
 
     // Creates a new assertion
-    Assertion::Assertion(const char* expr, const char* file, int line, bool tmp) : result(true), message(nullptr), 
-        nextItem(nullptr), prevItem(nullptr), temporary(tmp), expression(expr), file(file), line(line) { }
+    Assertion::Assertion(const char* expr, const char* file, int line, bool tmp) 
+        : temporary(tmp), expression(expr), file(file), line(line) { }
+
+// Only define this overload if allocation enabled - prevents use of features which 
+// require allocation when allocation not enabled
+#ifndef OSTEST_NO_ALLOC
+    Assertion::Assertion(const char* expr, _ostest_internal::_heapalloc_tag, 
+        const char* file, int line, bool tmp) : Assertion(expr, file, line, tmp) { }
+#endif
 
     bool Assertion::evaluate(UnitTest& test, bool result)
     {
@@ -81,7 +132,11 @@ namespace ostest
         else return false;
     }
 
-#if !OSTEST_NO_ALLOC
+#if OSTEST_NO_ALLOC
+    TestResult::TestResult() = default;
+    TestResult::TestResult(const TestResult&) = default;
+    TestResult::~TestResult() = default;
+#else
     TestResult::TestResult() : refCount(new unsigned int(1))
     {
 
