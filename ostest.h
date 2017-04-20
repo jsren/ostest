@@ -1,8 +1,8 @@
-/* ostest.h - (c) James S Renwick 2016 */
+/* ostest.h - (c) 2017 James S Renwick */
 #pragma once
 
-// Indicates use of OSTest
-#define OSTEST 1
+#define OSTEST_VERSION 1   // Major version number of ostest
+#define OSTEST_REVISION 2  // Revision number of ostest
 
 /* Flag switching whether OSTEST can use 'new/delete'.
    When set, this must also be set when building ostest 

@@ -107,13 +107,12 @@ namespace ostest
     class AssertionEnumerator
     {
     private:
-        bool initial;
+        bool initial = true;
         Assertion* item;
 
     public:
         /* Creates a new assertion/expectation enumerator. */
-        inline AssertionEnumerator(Assertion* first) : initial(true), 
-            item(first) { }
+        inline AssertionEnumerator(Assertion* first) : item(first) { }
 
     public:
         /* Selects the next assertion in the collection. Returns false if none available.
@@ -124,9 +123,9 @@ namespace ostest
         bool previous();
 
         /* Gets the next assertion in the collection. Call next() before accessing.
-        Returns nullptr if none available or end of collection reached. */
-        inline const Assertion* current() const {
-            return item;
+        Value undefined if next() has not been called or returned false. */
+        inline const Assertion& current() const {
+            return *item;
         }
     };
 
@@ -225,17 +224,15 @@ namespace ostest
     class TestEnumerator
     {
     private:
-        bool initial;
-        const char* suite;
-        const TestInfo* item;
+        bool initial = true;
+        const char* suite = nullptr;
+        const TestInfo* item = nullptr;
 
     public:
         /* Creates a new test enumerator. */
-        inline TestEnumerator() : initial(true), suite(nullptr), 
-            item(nullptr) { }
+        inline TestEnumerator() { }
         /* Creates a new test enumerator filtering tests to those within the given test suite. */
-        inline TestEnumerator(const char* suite) : initial(true), 
-            suite(suite), item(nullptr) { }
+        inline TestEnumerator(const char* suite) : suite(suite) { }
 
     public:
         /* Selects the next test in the collection. Returns false if none available. 
@@ -243,9 +240,9 @@ namespace ostest
         bool next();
 
         /* Gets the next test in the collection. Call next() before accessing. 
-        Returns nullptr if none available or end of collection reached. */
-        inline const TestInfo* current() const {
-            return item;
+        Value undefined if next() has not been called or returned false. */
+        inline const TestInfo& current() const {
+            return *item;
         }
     };
 

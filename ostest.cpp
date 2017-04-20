@@ -1,4 +1,4 @@
-/* ostest.cpp - (c) James S Renwick 2016 */
+/* ostest.cpp - (c) 2017 James S Renwick */
 #include "ostest-impl.h"
 #include "ostest-exception.h"
 
@@ -127,7 +127,7 @@ namespace ostest
         AssertionEnumerator assertions(this->firstItem);
 
         while (assertions.next()) {
-            if (!assertions.current()->passed()) return false;
+            if (!assertions.current().passed()) return false;
         }
         return true;
     }
@@ -137,7 +137,7 @@ namespace ostest
         AssertionEnumerator assertions(this->firstItem);
 
         while (assertions.next()) {
-            if (!assertions.current()->passed()) return assertions.current();
+            if (!assertions.current().passed()) return &assertions.current();
         }
         return nullptr;
     }
@@ -149,7 +149,7 @@ namespace ostest
         const Assertion* final = nullptr;
 
         while (assertions.next()) {
-            if (!assertions.current()->passed()) final = assertions.current();
+            if (!assertions.current().passed()) final = &assertions.current();
         }
 
         return final;

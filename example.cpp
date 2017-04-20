@@ -57,10 +57,10 @@ TEST(CustomSuite, TestWithWhileLoop)
     {
         // EXPECT/ASSERT statements only log the condition from the final loop iteration 
         EXPECT_NONZERO(this->testInt);
-		
+        
         // EXPECT_ALL/ASSERT_ALL will log the condition for all loop iterations.
-		// This will fail to build when OSTEST_NO_ALLOC defined.
-		EXPECT_ALL(this->testInt % 2 == 0);
+        // This will fail to build when OSTEST_NO_ALLOC defined.
+        EXPECT_ALL(this->testInt % 2 == 0);
 
         this->testInt--;
     }
@@ -97,17 +97,24 @@ TEST_EX(::exampleNS, CustomSuite, ScopedTest)
 }
 
 
-
+#define _MAKE_STR(v) #v
 
 int main()
 {
+    // Print application header
+    printf("\n");
+    printf("ostest example application\n");
+    printf("--------------------------------------\n");
+    printf("Version %d.%d (c) 2017 James S Renwick\n", OSTEST_VERSION, OSTEST_REVISION);
+    printf("\n");
+
     // Gets all available unit tests
     auto tests = ostest::getUnitTests();
 
     // Creates a test runner to run the test.
     // Results are reported in 'handleTestComplete.
     while (tests.next()) {
-        TestRunner(*tests.current()).run();
+        TestRunner(tests.current()).run();
     }
     return 0;
 }
@@ -131,7 +138,7 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) 
     auto assertions = result.getAssertions();
     while (assertions.next())
     {
-        const Assertion* assert = assertions.current();
+        const Assertion* assert = &assertions.current();
 
         if (assert == first && assert == final) printf("  ONLY: ");
         else if (assert == first) printf(" FIRST: ");
@@ -139,7 +146,7 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result) 
         else printf("\t");
 
         printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file, 
-		    assert->line, assert->expression);
+            assert->line, assert->expression);
 
 #if OSTEST_STD_EXCEPTIONS
         if (strcmp(assert->expression, "<unhandled exception>") == 0) {
