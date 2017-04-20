@@ -5,7 +5,7 @@ This utility and all associated source code remains the property of James S Renw
 Commercial use is forbidden except where permission is explicitly granted.
 
 ## Overview ##
-ostest is a relatively lightweight C++ unit testing framework based on Google Test.
+ostest is a relatively lightweight C++ unit testing framework similar to Google Test.
 
 The framework has been designed such that it has absolutely no dependencies - not even on
 a standard library\*, nor does it in fact require any memory allocation whatsoever\*\*.
@@ -15,17 +15,17 @@ a standard library\*, nor does it in fact require any memory allocation whatsoev
 \*\* Except where your compiler decides to emit it anyway. Set the OSTEST\_NO\_ALLOC preprocessor flag to disable allocation.
 
 ## Features ##
- * Named unit tests
+ * Unit tests
  * Test suites
- * Test suite setUp/tearDown for each test instance
- * Unit test metadata accessible from within tests
- * Basic assertions and GTest-style expectations
+ * Create tests in any source file, run from any source file
+ * Automatic test discovery/registration
+ * Unit test metadata (name, status, assertions) accessible from within test body
+ * Assert & Expect statements
  * Comprehensive test results available programatically
- * Assertion result break-down for each test instance
+ * Results broken down by individual assertions for each test
  * Standard library exception support!
- * Test-complete callback
  * Simple, clean syntax
- * Cross-platform C++11
+ * Cross-platform C++11, builds with GCC, Clang and MSVC
  * Run/filter specific tests
  * and more...
 
