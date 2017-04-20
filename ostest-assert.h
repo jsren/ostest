@@ -8,13 +8,17 @@ namespace _ostest_internal
 {
 #define _OSTEST_CONCAT(a, b) a ## b
 
-/* [internal] Creates a new ostest Unit Test Assertion. */
+    /* [internal] Creates a new ostest Unit Test Assertion. */
 #define _OSTEST_ASSERT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
                                      if (! _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr))) return; }
 
 /* [internal] Creates a new ostest Unit Test Expectation. */
 #define _OSTEST_EXPECT_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
                                      _OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr)); }
+
+/* [internal] Creates a new ostest Unit Test Expectation. */
+#define _OSTEST_EXPECTBR_INT(id, expr, cls) { static cls _OSTEST_CONCAT(_assertion, id)(#expr, __FILE__, __LINE__); \
+                                     if (!_OSTEST_CONCAT(_assertion, id) .evaluate(*this, (expr))) break; }
 
 #if !OSTEST_NO_ALLOC
 /* [internal] Creates a new ostest Unit Test Assertion. */
@@ -25,10 +29,15 @@ namespace _ostest_internal
 #define _OSTEST_EXPECT_ALL_INT(expr, cls) { cls* _assert = new cls(#expr, _ostest_internal::_heapalloc_tag{}, __FILE__, __LINE__, true); \
                                         _assert->evaluate(*this, (expr)); }
 
+/* [internal] Creates a new ostest Unit Test Expectation. */
+#define _OSTEST_EXPECT_ALLBR_INT(expr, cls) { cls* _assert = new cls(#expr, _ostest_internal::_heapalloc_tag{}, __FILE__, __LINE__, true); \
+                                        if (!_assert->evaluate(*this, (expr))) break; }
+
 #else
 // Define macros as being unavailable if OSTEST_NO_ALLOC defined
 #define _OSTEST_ASSERT_ALL_INT(expr, cls) static_assert(false, "ASSERT_ALL unavailable when 'OSTEST_NO_ALLOC' defined.");
 #define _OSTEST_EXPECT_ALL_INT(expr, cls) static_assert(false, "EXPECT_ALL unavailable when 'OSTEST_NO_ALLOC' defined.");
+#define _OSTEST_EXPECT_ALLBR_INT(expr, cls) static_assert(false, "EXPECT_ALL_OR_BREAK unavailable when 'OSTEST_NO_ALLOC' defined.");
 #endif
 
 
@@ -67,11 +76,16 @@ namespace _ostest_internal
 #define OSTEST_ASSERT(expr) _OSTEST_ASSERT_INT(__COUNTER__, expr, ::ostest::Assertion)
 /* Creates a new OSTest Unit Test Expectation. */
 #define OSTEST_EXPECT(expr) _OSTEST_EXPECT_INT(__COUNTER__, expr, ::ostest::Assertion)
+/* Creates a new OSTest Unit Test Expectation. Breaks when condition false. */
+#define OSTEST_EXPECT_OR_BREAK(expr) _OSTEST_EXPECTBR_INT(__COUNTER__, expr, ::ostest::Assertion)
 
 /* Creates a new OSTest Unit Test Assertion. */
 #define OSTEST_ASSERT_ALL(expr) _OSTEST_ASSERT_ALL_INT(expr, ::ostest::Assertion)
 /* Creates a new OSTest Unit Test Expectation. */
 #define OSTEST_EXPECT_ALL(expr) _OSTEST_EXPECT_ALL_INT(expr, ::ostest::Assertion)
+/* Creates a new OSTest Unit Test Expectation. Breaks when condition false. */
+#define OSTEST_EXPECT_ALL_OR_BREAK(expr) _OSTEST_EXPECT_ALLBR_INT(expr, ::ostest::Assertion)
+
 
 #define OSTEST_ASSERT_ZERO(expr)    _OSTEST_ASSERT_INT(__COUNTER__, (expr) == 0, ::_ostest_internal::_assert_ze)
 #define OSTEST_ASSERT_NONZERO(expr) _OSTEST_ASSERT_INT(__COUNTER__, (expr) != 0, ::_ostest_internal::_assert_nz)
@@ -97,9 +111,11 @@ namespace _ostest_internal
 
 #define ASSERT(expr) OSTEST_ASSERT(expr)
 #define EXPECT(expr) OSTEST_EXPECT(expr)
+#define EXPECT_OR_BREAK(expr) OSTEST_EXPECT_OR_BREAK(expr)
 
 #define ASSERT_ALL(expr) OSTEST_ASSERT_ALL(expr)
 #define EXPECT_ALL(expr) OSTEST_EXPECT_ALL(expr)
+#define EXPECT_ALL_OR_BREAK(expr) OSTEST_EXPECT_ALL_OR_BREAK(expr)
 
 #define ASSERT_ZERO(expr) OSTEST_ASSERT_ZERO(expr)
 #define ASSERT_NONZERO(expr) OSTEST_ASSERT_NONZERO(expr)

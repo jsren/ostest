@@ -14,25 +14,23 @@ TEST_SUITE(EmptySuite)
 class CustomSuite : public ::ostest::TestSuite
 {
 protected:
-    int testInt;
+    int testInt = 0;
 
-    CustomSuite() : testInt(4)
-    {
+    CustomSuite() {
         //printf("[INFO] [CustomSuite] Constructor Called.\n");
     }
 
-    void setUp() override
+    virtual void setUp() override final
     {
+        testInt = 4; // Reset value before each test
         //printf("[INFO] [CustomSuite] SetUp Called.\n");
     }
 
-    void tearDown() override
-    {
+    virtual void tearDown() override final {
         //printf("[INFO] [CustomSuite] Tear Down Called.\n");
     }
 
-    virtual ~CustomSuite()
-    {
+    ~CustomSuite() {
         //printf("[INFO] [CustomSuite] Destructor Called.\n");
     }
 };
@@ -50,7 +48,7 @@ TEST(EmptySuite, EmptyTest)
     ASSERT_NEQ(1, 2);
 }
 
-TEST(CustomSuite, TestWithWhileLoop)
+TEST(CustomSuite, TestWithLoop)
 {
     ASSERT_NONZERO(this->testInt);
     
@@ -69,6 +67,27 @@ TEST(CustomSuite, TestWithWhileLoop)
     ASSERT_ZERO(this->testInt);
 }
 
+
+TEST(CustomSuite, TestWithLoopBreak)
+{
+    ASSERT_NONZERO(this->testInt);
+
+    while (this->testInt > 0)
+    {
+        // EXPECT/ASSERT statements only log the condition from the final loop iteration 
+        EXPECT_NONZERO(this->testInt);
+
+        // EXPECT(_ALL)_OR_BREAK will break if the expression is false
+        EXPECT_OR_BREAK(this->testInt % 2 == 0);
+
+        // This is just syntactic sugar for the below:
+        bool expr = this->testInt % 2 == 0;
+        EXPECT(expr); if (!expr) break;
+
+        this->testInt--;
+    }
+    ASSERT_ZERO(this->testInt);
+}
 
 
 // Unhandled exceptions during tests are logged and treated as a failed ASSERT
@@ -118,7 +137,7 @@ int main()
     // Creates a test runner to run the test.
     // Results are reported in 'handleTestComplete.
     while (tests.next()) {
-        TestRunner(tests.current()).run();
+        auto result = TestRunner(tests.current()).run();
     }
     return 0;
 }
