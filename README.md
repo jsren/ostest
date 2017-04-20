@@ -48,7 +48,7 @@ To build the example code, run `make example`.
 Include all .h and .cpp files in a project, build and run.
 
 ## Example ##
-```
+```c++
 #include "ostest.h"
 
 TEST_SUITE(ArithmeticSuite)
