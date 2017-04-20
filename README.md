@@ -16,7 +16,7 @@ a standard library\*, nor does it in fact require any memory allocation whatsoev
 
 ## Features ##
  * Unit tests
- * Test suites
+ * Test suites with overridable setup/tear-down
  * Create tests in any source file, run from any source file
  * Automatic test discovery/registration
  * Unit test metadata (name, status, assertions) accessible from within test body
