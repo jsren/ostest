@@ -1,10 +1,11 @@
-![Build Status Badge](https://jsren.github.io/test-results/Build%20OSTest/build-status.svg)
 
 # ostest (C) 2017 James S Renwick
 Operating System Unit Test Framework
 
 This utility and all associated source code remains the property of James S Renwick.
 Commercial use is forbidden except where permission is explicitly granted.
+
+![Build Status Badge](https://jsren.github.io/test-results/Build%20OSTest/build-status.svg)
 
 ## Overview ##
 ostest is a relatively lightweight C++ unit testing framework similar to Google Test.
