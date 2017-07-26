@@ -1,3 +1,5 @@
+![Build Status Badge](https://jsren.github.io/test-results/Build%20OSTest/build-status.svg)
+
 # ostest (C) 2017 James S Renwick
 Operating System Unit Test Framework
 
