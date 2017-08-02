@@ -103,7 +103,7 @@ namespace _ostest_internal
 #define OSTEST_EXPECT_EQ(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) == (expr2), ::_ostest_internal::_assert_eq)
 #define OSTEST_EXPECT_NEQ(expr1, expr2)  _OSTEST_EXPECT_INT(__COUNTER__, (expr1) != (expr2), ::_ostest_internal::_assert_neq)
 #define OSTEST_EXPECT_LT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) < (expr2), ::_ostest_internal::_assert_lt)
-#define OSTEST_EXPECT_GT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) > expr2), ::_ostest_internal::_assert_gt)
+#define OSTEST_EXPECT_GT(expr1, expr2)   _OSTEST_EXPECT_INT(__COUNTER__, (expr1) > (expr2), ::_ostest_internal::_assert_gt)
 #define OSTEST_EXPECT_LTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNTER__, (expr1) <= (expr2), ::_ostest_internal::_assert_lte)
 #define OSTEST_EXPECT_GTEQ(expr1, expr2) _OSTEST_EXPECT_INT(__COUNTER__, (expr1) >= (expr2), ::_ostest_internal::_assert_gte)
 

@@ -21,14 +21,14 @@ namespace ostest
     */
     extern const bool ostest_no_alloc;
 
-    /* Flag switching whether ostest supports C++ standard 
+    /* Flag switching whether ostest supports C++ standard
     library exceptions. Set when ostest compiled with 'OSTEST_STD_EXCEPTIONS'.
     */
     extern const bool ostest_std_exceptions;
 
 
     /* User-defined test-complete handler. Run once a test has completed. */
-    void handleTestComplete(const ostest::TestInfo&, 
+    void handleTestComplete(const ostest::TestInfo&,
         const ostest::TestResult&);
 
     /* Returns an enumerator over the defined unit tests. */

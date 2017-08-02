@@ -51,12 +51,12 @@ TEST(EmptySuite, EmptyTest)
 TEST(CustomSuite, TestWithLoop)
 {
     ASSERT_NONZERO(this->testInt);
-    
+
     while (this->testInt > 0)
     {
-        // EXPECT/ASSERT statements only log the condition from the final loop iteration 
+        // EXPECT/ASSERT statements only log the condition from the final loop iteration
         EXPECT_NONZERO(this->testInt);
-        
+
 #if !OSTEST_NO_ALLOC
         // EXPECT_ALL/ASSERT_ALL will log the condition for all loop iterations.
         // It requires memory allocation.
@@ -74,7 +74,7 @@ TEST(CustomSuite, TestWithLoopBreak)
 
     while (this->testInt > 0)
     {
-        // EXPECT/ASSERT statements only log the condition from the final loop iteration 
+        // EXPECT/ASSERT statements only log the condition from the final loop iteration
         EXPECT_NONZERO(this->testInt);
 
         // EXPECT(_ALL)_OR_BREAK will break if the expression is false
@@ -126,7 +126,7 @@ int main()
     printf("ostest example application\n");
     printf("--------------------------------------\n");
     printf("Version %d.%d (c) 2017 James S Renwick\n", OSTEST_VERSION, OSTEST_REVISION);
-    printf("Built with: %s %s\n", 
+    printf("Built with: %s %s\n",
         ostest::ostest_no_alloc ? "OSTEST_NO_ALLOC" : "",
         ostest::ostest_std_exceptions ? "OSTEST_STD_EXCEPTIONS" : "");
     printf("\n");
@@ -168,7 +168,7 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result)
         else if (assert == final) printf(" FINAL: ");
         else printf("\t");
 
-        printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file, 
+        printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file,
             assert->line, assert->expression);
 
         if (ostest::ostest_std_exceptions) {

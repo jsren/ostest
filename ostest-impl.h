@@ -72,12 +72,12 @@ namespace ostest
 
     public:
         /* [internal] Creates (but does not register) a new Assertion instance. */
-        Assertion(const char* expression, const char* file = __FILE__, 
+        Assertion(const char* expression, const char* file = __FILE__,
             int line = __LINE__, bool temporary = false);
 
         /* [internal] Creates (but does not register) a new heap-allocated Assertion instance.
-           THIS IS NOT SUPPORTED IF OSTEST IS BUILT WITH OSTEST_NO_ALLOC. */        
-        Assertion(const char* expression, _ostest_internal::_heapalloc_tag, 
+           THIS IS NOT SUPPORTED IF OSTEST IS BUILT WITH OSTEST_NO_ALLOC. */
+        Assertion(const char* expression, _ostest_internal::_heapalloc_tag,
             const char* file = __FILE__, int line = __LINE__, bool temporary = false);
 
         virtual ~Assertion() { }
@@ -90,8 +90,8 @@ namespace ostest
         inline bool passed() const { return result; }
 
         /* Gets a description of the assertion outcome. */
-        virtual const char* getMessage() const { 
-            return result ? emptyMsg : "The assertion failed."; 
+        virtual const char* getMessage() const {
+            return result ? emptyMsg : "The assertion failed.";
         }
 
         /* Returns true if the assertion passed. False otherwise. */
@@ -158,8 +158,8 @@ namespace ostest
             return AssertionEnumerator(this->firstItem);
         }
         /* Returns true if the test succeeded. False otherwise. */
-        inline operator bool() const { 
-            return succeeded(); 
+        inline operator bool() const {
+            return succeeded();
         }
     };
 
@@ -176,7 +176,7 @@ namespace ostest
     public:
         virtual TestResult run();
     };
-    
+
     class UnitTest
     {
         friend class Assertion;
@@ -234,11 +234,11 @@ namespace ostest
         inline TestEnumerator(const char* suite) : suite(suite) { }
 
     public:
-        /* Selects the next test in the collection. Returns false if none available. 
+        /* Selects the next test in the collection. Returns false if none available.
         Call next() before current(). */
         bool next();
 
-        /* Gets the next test in the collection. Call next() before accessing. 
+        /* Gets the next test in the collection. Call next() before accessing.
         Value undefined if next() has not been called or returned false. */
         inline const TestInfo& current() const {
             return *item;
@@ -300,7 +300,7 @@ namespace _ostest_internal
     private:
         bool alloc;
 
-        union Data { 
+        union Data {
             alignas(alignof(T)) char _data[sizeof(T)]; T _obj;
             inline Data() noexcept : _data() { } inline ~Data() { };
         } data;
@@ -316,7 +316,7 @@ namespace _ostest_internal
             return data._obj;
         }
         ::ostest::TestSuite& getSuite() override
-        { 
+        {
             if (!alloc) newInstance();
             return data._obj;
         }

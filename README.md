@@ -34,20 +34,21 @@ a standard library\*, nor does it in fact require any memory allocation whatsoev
 
 ## Building ##
 
-The ostest library comprises all source files except _example.cpp_ which is intended as a usage example 
+The ostest library comprises all source files except _example.cpp_ which is intended as a usage example
 and can be built as a standalone executable.
 
 ### Preprocessor Flags ###
 The following preprocessor flags may be set when building the ostest library:
  * Define `OSTEST_NO_ALLOC` to prevent ostest from allocating memory
  * Define `OSTEST_STD_EXCEPTIONS` to enable C++ exception handling
-  
+
 The following preprocessor flags may be set when including the ostest headers:
  * Define `OSTEST_MUST_PREFIX` to only define the prefixed macros (e.g. `OSTEST_TEST` instead of `TEST`)
 
 ### With make ###
 To build the library, run `make`.
 To build the example code, run `make example`.
+To build ostest's ostest tests, run `make test`.
 
 ### With Visual Studio ###
 Include all .h and .cpp files in a project, build and run.
@@ -72,7 +73,7 @@ TEST(ArithmeticSuite, AdditionTest)
 
     // Get test info
     const auto& test = this->getInfo();
-    printf("Running test %s::%s (%s:%d)\n", test.suiteName, 
+    printf("Running test %s::%s (%s:%d)\n", test.suiteName,
         test.testName, test.file, test.line);
 
     // Get current result info

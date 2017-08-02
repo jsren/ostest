@@ -33,7 +33,7 @@ namespace ostest
     private:
         const char* exceptionMsg;
     public:
-        explicit NoExceptionAssertion(const std::exception& exception, 
+        explicit NoExceptionAssertion(const std::exception& exception,
             const TestInfo& test, bool temp=true);
         virtual ~NoExceptionAssertion();
 
@@ -64,13 +64,13 @@ namespace ostest
     }
 
     // Creates a new assertion
-    Assertion::Assertion(const char* expr, const char* file, int line, bool tmp) 
+    Assertion::Assertion(const char* expr, const char* file, int line, bool tmp)
         : temporary(tmp), expression(expr), file(file), line(line) { }
 
-// Only define this overload if allocation enabled - prevents use of features which 
+// Only define this overload if allocation enabled - prevents use of features which
 // require allocation when allocation not enabled
 #ifndef OSTEST_NO_ALLOC
-    Assertion::Assertion(const char* expr, _ostest_internal::_heapalloc_tag, 
+    Assertion::Assertion(const char* expr, _ostest_internal::_heapalloc_tag,
         const char* file, int line, bool tmp) : Assertion(expr, file, line, tmp) { }
 #endif
 
@@ -87,7 +87,7 @@ namespace ostest
 
         // Update first item
         if (this->prevItem == nullptr && this->nextItem != nullptr) {
-            test.result.firstItem = this->nextItem; 
+            test.result.firstItem = this->nextItem;
         }
 
         // Add to end of list
@@ -96,7 +96,7 @@ namespace ostest
 
         // Update list first and final pointers
         if (test.result.firstItem == nullptr) test.result.firstItem = this;
-        if (test.result.finalItem != nullptr && test.result.finalItem != this) 
+        if (test.result.finalItem != nullptr && test.result.finalItem != this)
         {
             this->prevItem = test.result.finalItem;
             test.result.finalItem->nextItem = this;
@@ -109,9 +109,9 @@ namespace ostest
     bool AssertionEnumerator::next()
     {
         // Handle first element
-        if (initial) 
+        if (initial)
         {
-            initial = false; 
+            initial = false;
             return item != nullptr;
         }
         else if (item != nullptr && item->nextItem != nullptr)
@@ -166,7 +166,7 @@ namespace ostest
                 {
                     Assertion* tmp = next->nextItem;
 
-                    // Delete or reset 
+                    // Delete or reset
                     if (next->temporary) delete next;
                     else next->prevItem = next->nextItem = nullptr;
 
@@ -221,7 +221,7 @@ namespace ostest
     }
 
     TestInfo::TestInfo(const char* suiteName, const char* testName,
-        ITestWrapper& wrapper, const char* file, int line) 
+        ITestWrapper& wrapper, const char* file, int line)
         : wrapper(wrapper), line(line), file(file),
         suiteName(suiteName), testName(testName)
     {
@@ -254,7 +254,7 @@ namespace ostest
 
         return item != nullptr;
     }
-    
+
 
     TestResult TestRunner::run()
     {
@@ -278,7 +278,7 @@ namespace ostest
             (new NoExceptionAssertion(*e, test.getInfo()))->evaluate(test, false);
         }
         catch (const std::string& str) {
-            (new NoExceptionAssertion(std::runtime_error(str.c_str()), 
+            (new NoExceptionAssertion(std::runtime_error(str.c_str()),
                 test.getInfo()))->evaluate(test, false);
         }
         catch (const char* msg) {
@@ -306,8 +306,8 @@ namespace ostest
 
     static const char noexceptionMsg[] = "An unhandled exception occurred: ";
 
-    NoExceptionAssertion::NoExceptionAssertion(const std::exception& exception, 
-        const TestInfo& test, bool temp) : Assertion("<unhandled exception>", 
+    NoExceptionAssertion::NoExceptionAssertion(const std::exception& exception,
+        const TestInfo& test, bool temp) : Assertion("<unhandled exception>",
             test.file, test.line, temp)
     {
         auto what = exception.what();
@@ -349,6 +349,6 @@ namespace ostest
     }
 
 #endif
-    
+
 
 }
