@@ -6,6 +6,8 @@ This utility and all associated source code remains the property of James S Renw
 Commercial use is forbidden except where permission is explicitly granted.
 
 ![Build Status Badge](https://jsren.github.io/test-results/Build%20OSTest/build-status.svg)
+![Test Status Badge](https://jsren.github.io/test-results/Build%20OSTest/test-status.svg)
+
 
 ## Overview ##
 ostest is a relatively lightweight C++ unit testing framework similar to Google Test.
