@@ -1,4 +1,4 @@
-/* assertions.cpp - (c) 2017 James S Renwick */
+/* assertion-test.cpp - (c) 2017 James S Renwick */
 #include "common.hpp"
 
 using namespace ostest;
@@ -10,8 +10,44 @@ namespace selftest
     TEST_EX(::selftest, _AssertionSuite, _TestAssertPass) {
         ASSERT(1 == 1);
     }
-    TEST_EX(::selftest, _AssertionSuite, _TestAssertFail) {
+    TEST_EX(::selftest, _AssertionSuite, _TestAssert1Fail) {
         ASSERT(1 != 1);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestAssert2Fail) {
+        ASSERT(1 != 1);
+        EXPECT(true);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestAssertionCount1Pass)
+    {
+        EXPECT_ONCE(true);
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 1);
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 2);
+        EXPECT_EQ_ALL(countAssertions(this->getResult()), 3);
+        EXPECT_EQ_ALL(countAssertions(this->getResult()), 4);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestAssertionCount2Pass)
+    {
+        EXPECT_ONCE(true);
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 1);
+
+        for (int i = 0; i < 10; i++) {
+            EXPECT_ALL(true);
+        }
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 12);
+        EXPECT_EQ_ALL(countAssertions(this->getResult()), 13);
+        EXPECT_EQ_ALL(countAssertions(this->getResult()), 14);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestAssertionCount3Pass)
+    {
+        ASSERT_ONCE(true);
+        ASSERT_EQ_ONCE(countAssertions(this->getResult()), 1);
+
+        for (int i = 0; i < 10; i++) {
+            ASSERT_ALL(true);
+        }
+        ASSERT_EQ_ONCE(countAssertions(this->getResult()), 12);
+        ASSERT_EQ_ALL(countAssertions(this->getResult()), 13);
+        ASSERT_EQ_ALL(countAssertions(this->getResult()), 14);
     }
     TEST_EX(::selftest, _AssertionSuite, _TestAssertAllPass) {
         for (int i = 0; i < 100; i++) {
@@ -20,7 +56,7 @@ namespace selftest
     }
     TEST_EX(::selftest, _AssertionSuite, _TestAssertAllFail) {
         for (int i = 0; i < 10; i++) {
-            ASSERT_ALL(i < 5);
+            ASSERT_ALL(i < 0);
         }
     }
     TEST_EX(::selftest, _AssertionSuite, _TestAssertZeroPass) {
@@ -90,11 +126,13 @@ namespace selftest
         for (int i = 0; i < 100; i++) {
             EXPECT_ALL(i < 100);
         }
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 100);
     }
     TEST_EX(::selftest, _AssertionSuite, _TestExpectAllFail) {
         for (int i = 0; i < 10; i++) {
-            EXPECT_ALL(i < 5);
+            EXPECT_ALL(i < 0);
         }
+        EXPECT_NEQ_ONCE(countAssertions(this->getResult()), 10);
     }
     TEST_EX(::selftest, _AssertionSuite, _TestExpectZeroPass) {
         EXPECT_ZERO(0);
@@ -152,6 +190,42 @@ namespace selftest
     TEST_EX(::selftest, _AssertionSuite, _TestExpectGtEqFail) {
         EXPECT_GTEQ(1, 2);
     }
+    TEST_EX(::selftest, _AssertionSuite, _TestExpectOnceOrBreakPass)
+    {
+        int iteration = 0;
+        for (; iteration < 10; iteration++) {
+            OSTEST_EXPECT_ONCE_OR_BREAK(iteration < 10);
+        }
+        EXPECT_EQ(iteration, 10);
+        EXPECT_EQ(countAssertions(this->getResult()), 2);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestExpectAllOrBreakPass)
+    {
+        int iteration = 0;
+        for (; iteration < 10; iteration++) {
+            OSTEST_EXPECT_ALL_OR_BREAK(iteration < 10);
+        }
+        EXPECT_EQ(iteration, 10);
+        EXPECT_EQ(countAssertions(this->getResult()), 11);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestExpectOnceOrBreakFail)
+    {
+        int iteration = 0;
+        for (; iteration < 10; iteration++) {
+            OSTEST_EXPECT_ONCE_OR_BREAK(iteration < 5);
+        }
+        EXPECT_NEQ(iteration, 5);
+        EXPECT_NEQ(countAssertions(this->getResult()), 2);
+    }
+    TEST_EX(::selftest, _AssertionSuite, _TestExpectAllOrBreakFail)
+    {
+        int iteration = 0;
+        for (; iteration < 10; iteration++) {
+            OSTEST_EXPECT_ALL_OR_BREAK(iteration < 0);
+        }
+        EXPECT_NEQ(iteration, 0);
+        EXPECT_NEQ(countAssertions(this->getResult()), 2);
+    }
 }
 
 
@@ -167,8 +241,9 @@ TEST(AssertionSuite, AssertionsTest)
 
         if (testShouldFail(test))
         {
-            printTestResult(test, !result.succeeded(), result);
-            EXPECT_ALL(!result.succeeded());
+            bool failed = !result.succeeded() && allAssertionsFailed(result);
+            printTestResult(test, failed, result);
+            EXPECT_ALL(failed);
         }
         else {
             printTestResult(test, result.succeeded(), result);

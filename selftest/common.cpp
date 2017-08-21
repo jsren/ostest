@@ -13,9 +13,26 @@ static bool string_ends_with(const std::string& string, const std::string& suffi
 }
 
 
+size_t countAssertions(const TestResult& result)
+{
+    auto enum_ = result.getAssertions();
+    size_t assertionCount = 0;
+    while (enum_.next()) assertionCount++;
+    return assertionCount;
+}
+
 bool testShouldFail(const TestInfo& test)
 {
     return string_ends_with(test.testName, "Fail");
+}
+
+bool allAssertionsFailed(const TestResult& result)
+{
+    auto enum_ = result.getAssertions();
+    while (enum_.next()) {
+        if (enum_.current().passed()) return false;
+    }
+    return true;
 }
 
 void printTestResult(const TestInfo& test, bool succeeded, const TestResult& result)
@@ -34,6 +51,13 @@ void printTestResult(const TestInfo& test, bool succeeded, const TestResult& res
         // Print test result
         printf("[FAIL] [%s::%s] unexpected %s at %s:%i\n", test.suiteName,
             test.testName, result ? passStr : failStr, test.file, test.line);
+
+        auto enum_ = result.getAssertions();
+        while (enum_.next())
+        {
+            auto& assertion = enum_.current();
+            printf("\t\"%s\" at %s:%i\n", assertion.getMessage(), assertion.file, assertion.line);
+        }
     }
 }
 
