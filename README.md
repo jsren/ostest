@@ -37,8 +37,10 @@ a standard library\*, nor does it in fact require any memory allocation whatsoev
 
 ## Building ##
 
-The ostest library comprises all source files except _example.cpp_ which is intended as a usage example
+The ostest library comprises all source files in the root dierctory except _example.cpp_ which is intended as a usage example
 and can be built as a standalone executable.
+
+An additional _selftest_ directory contains test files for testing the ostest library with itself.
 
 ### Preprocessor Flags ###
 The following preprocessor flags may be set when building the ostest library:
@@ -52,6 +54,13 @@ The following preprocessor flags may be set when including the ostest headers:
 To build the library, run `make`.
 To build the example code, run `make example`.
 To build ostest's ostest tests, run `make test`.
+To build all, run `make all`.
+
+Target profiles can be specified with `PROFILE=`, as can the C++ compiler with `CXX=`.
+Available profiles can be found under the _profiles_ directory.
+
+#### Example ####
+`make all CXX=clang++ PROFILE=bare`
 
 ### With Visual Studio ###
 Include all .h and .cpp files in a project, build and run.

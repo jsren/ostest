@@ -24,6 +24,7 @@ namespace selftest
         ASSERT(1 != 1);
         EXPECT(true);
     }
+#if !OSTEST_NO_ALLOC
     TEST_EX(::selftest, _AssertionSuite, _TestAssertionCountPass1)
     {
         EXPECT_ONCE(true);
@@ -56,6 +57,28 @@ namespace selftest
         ASSERT_EQ_ALL(countAssertions(this->getResult()), 13);
         ASSERT_EQ_ALL(countAssertions(this->getResult()), 14);
     }
+    TEST_EX(::selftest, _AssertionSuite, _TestAssertionCountPass4)
+    {
+        ASSERT_ONCE(true);
+        EXPECT_EQ_ONCE(countAssertions(this->getResult()), 1);
+
+        for (int i = 0; i < 10; i++) {
+            ASSERT_ALL(true);
+            EXPECT_ALL(true);
+        }
+        ASSERT_EQ_ONCE(countAssertions(this->getResult()), 22);
+        EXPECT_EQ_ALL(countAssertions(this->getResult()), 23);
+        ASSERT_EQ_ALL(countAssertions(this->getResult()), 24);
+    }
+#endif
+    TEST_EX(::selftest, _AssertionSuite, _TestAssertionCountPass5)
+    {
+        EXPECT_ZERO(countAssertions(this->getResult()));
+        EXPECT_ONCE(true);
+        EXPECT_EQ(countAssertions(this->getResult()), 2);
+        EXPECT_EQ(countAssertions(this->getResult()), 3);
+    }
+#if !OSTEST_NO_ALLOC
     TEST_EX(::selftest, _AssertionSuite, _TestAssertAllPass) {
         for (int i = 0; i < 100; i++) {
             ASSERT_ALL(i < 100);
@@ -67,6 +90,7 @@ namespace selftest
             ASSERT_ALL(i < 0);
         }
     }
+#endif
     TEST_EX(::selftest, _AssertionSuite, _TestAssertZeroPass) {
         ASSERT_ZERO(0);
     }
@@ -141,6 +165,7 @@ namespace selftest
         TEST_EXPECT_ALL_FAIL;
         EXPECT(1 != 1);
     }
+#if !OSTEST_NO_ALLOC
     TEST_EX(::selftest, _AssertionSuite, _TestExpectAllPass) {
         for (int i = 0; i < 100; i++) {
             EXPECT_ALL(i < 100);
@@ -154,6 +179,7 @@ namespace selftest
         }
         EXPECT_NEQ_ONCE(countAssertions(this->getResult()), 10);
     }
+#endif
     TEST_EX(::selftest, _AssertionSuite, _TestExpectZeroPass) {
         EXPECT_ZERO(0);
     }
@@ -229,6 +255,7 @@ namespace selftest
         EXPECT_EQ(iteration, 10);
         EXPECT_EQ(countAssertions(this->getResult()), 2);
     }
+#if !OSTEST_NO_ALLOC
     TEST_EX(::selftest, _AssertionSuite, _TestExpectAllOrBreakPass)
     {
         int iteration = 0;
@@ -238,6 +265,7 @@ namespace selftest
         EXPECT_EQ(iteration, 10);
         EXPECT_EQ(countAssertions(this->getResult()), 11);
     }
+#endif
     TEST_EX(::selftest, _AssertionSuite, _TestExpectOnceOrBreakFail)
     {
         TEST_EXPECT_ALL_FAIL;
@@ -248,6 +276,7 @@ namespace selftest
         EXPECT_NEQ(iteration, 5);
         EXPECT_NEQ(countAssertions(this->getResult()), 2);
     }
+#if !OSTEST_NO_ALLOC
     TEST_EX(::selftest, _AssertionSuite, _TestExpectAllOrBreakFail)
     {
         TEST_EXPECT_ALL_FAIL;
@@ -258,6 +287,7 @@ namespace selftest
         EXPECT_NEQ(iteration, 0);
         EXPECT_NEQ(countAssertions(this->getResult()), 2);
     }
+#endif
 }
 
 
@@ -275,11 +305,11 @@ TEST(AssertionSuite, AssertionsTest)
         {
             bool failed = !result.succeeded() && allAssertionsFailed(result);
             printTestResult(test, failed, result);
-            EXPECT_ALL(failed);
+            EXPECT_ALL_OR_ASSERT(failed);
         }
         else {
             printTestResult(test, result.succeeded(), result);
-            EXPECT_ALL(result.succeeded());
+            EXPECT_ALL_OR_ASSERT(result.succeeded());
         }
     }
 }

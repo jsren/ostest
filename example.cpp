@@ -95,6 +95,7 @@ TEST(CustomSuite, TestWithLoopBreak)
 
 
 // Unhandled exceptions during tests are logged and treated as a failed ASSERT
+#if OSTEST_STD_EXCEPTIONS
 #include <stdexcept>
 TEST(CustomSuite, ExceptionTest)
 {
@@ -103,6 +104,7 @@ TEST(CustomSuite, ExceptionTest)
         throw std::runtime_error("This is a test exception.");
     }
 }
+#endif
 
 // Custom metadata can be added to tests to be used by 'handleTestComplete'
 TEST(CustomSuite, MetadataTest)

@@ -96,7 +96,7 @@ namespace selftest
 
         for (unsigned int i = 0; i < sizeof(T4) / sizeof(T4{}[0]); i++)
         {
-            EXPECT_EQ_ALL(getMetadata<T4>("m4")->value[i], f4(i));
+            EXPECT_ALL_OR_ASSERT(getMetadata<T4>("m4")->value[i] == f4(i));
         }
     }
 
@@ -175,7 +175,7 @@ namespace selftest
 
         for (unsigned int i = 0; i < sizeof(T4) / sizeof(T4{}[0]); i++)
         {
-            EXPECT_EQ_ALL(getInfo().getMetadata<T4>("m4")->value[i], 0);
+            EXPECT_ALL_OR_ASSERT(getInfo().getMetadata<T4>("m4")->value[i] == 0);
         }
 
         // Test for missing metadata
@@ -193,6 +193,7 @@ static bool string_ends_with(const std::string& string, const std::string& suffi
         string.compare(string.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
+
 TEST(MetadataSuite, MetadataTests)
 {
     auto tests = getUnitTests("_MetadataSuite");
@@ -206,11 +207,11 @@ TEST(MetadataSuite, MetadataTests)
         {
             bool failed = !result.succeeded() && allAssertionsFailed(result);
             printTestResult(test, failed, result);
-            EXPECT_ALL(failed);
+            EXPECT_ALL_OR_ASSERT(failed);
         }
         else {
             printTestResult(test, result.succeeded(), result);
-            EXPECT_ALL(result.succeeded());
+            EXPECT_ALL_OR_ASSERT(result.succeeded());
         }
     }
 }
