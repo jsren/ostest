@@ -20,6 +20,62 @@ namespace ostest
 
 namespace _ostest_internal
 {
+    // Necessary parts from type_traits
+    template<bool B>
+    struct bool_constant {
+        static constexpr const bool value = B;
+    };
+    using true_type = bool_constant<true>;
+    using false_type = bool_constant<false>;
+
+    template<typename T>
+    struct is_pointer_type : false_type { };
+    template<typename T>
+    struct is_pointer_type<T*> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T*&> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T*&&> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T* const> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T* volatile> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T* const volatile> : true_type { };
+    template<typename T>
+    struct is_pointer_type<T[]> : true_type { };
+
+    template<typename T>
+    struct is_test_type {
+    private:
+        template<typename Y, class = decltype(static_cast<ostest::UnitTest*>(Y{nullptr}))>
+        static true_type test(int);
+        template<typename>
+        static false_type test(...);
+
+    public:
+        static constexpr const bool value = decltype(test<T*>(0))::value;
+    };
+
+    template<typename T>
+    struct remove_reference { using type = T; };
+    template<typename T>
+    struct remove_reference<T&> { using type = T; };
+    template<typename T>
+    struct remove_reference<T&&> { using type = T; };
+
+    template<typename T>
+    constexpr inline T&& forward(typename remove_reference<T>::type& ref) noexcept
+    {
+        return static_cast<T&&>(ref);
+    }
+    template<typename T>
+    constexpr inline T&& forward(typename remove_reference<T>::type&& ref) noexcept
+    {
+        return static_cast<T&&>(ref);
+    }
+
+
     template<typename T>
     class _LinkedList
     {
@@ -48,10 +104,61 @@ namespace _ostest_internal
 
     // Type used to select an overload when the object is heap-allocated
     struct _heapalloc_tag { };
+
+    // Type representing an item of metadata in a linked list
+    struct _MetadataItem
+    {
+        friend ostest::UnitTest;
+
+    public:
+        const char* name{};
+
+    protected:
+        _MetadataItem* nextItem{};
+        ostest::UnitTest& test;
+        void* item{};
+
+        _MetadataItem(ostest::UnitTest& test, const char* name, void* item);
+        virtual ~_MetadataItem();
+    };
 }
 
 namespace ostest
 {
+    template<typename T>
+    class Metadata final : public _ostest_internal::_MetadataItem
+    {
+    public:
+        T value{};
+
+    private:
+        Metadata() = delete;
+        Metadata& operator=(const Metadata&) = delete;
+        Metadata& operator=(Metadata&&) = delete;
+
+    public:
+        /* Creates a new metadata instance. */
+        template<typename Test>
+        Metadata(Test& test, const char* name) :
+            _ostest_internal::_MetadataItem(test, name, this)
+        {
+            static_assert(_ostest_internal::is_test_type<Test>::value,
+                "'test' must be a valid pointer to a unit test");
+            static_assert(!_ostest_internal::is_pointer_type<T>::value,
+                "Metadata raw pointers will not be freed. Consider wrapping in smart pointer.");
+        }
+        /* Creates a new metadata instance. */
+        template<typename Test, typename Y = T>
+        Metadata(Test& test, const char* name, Y&& value) :
+            _ostest_internal::_MetadataItem(test, name, this),
+            value(_ostest_internal::forward<Y>(value))
+        {
+            static_assert(_ostest_internal::is_test_type<Test>::value,
+                "'test' must be a valid pointer to a unit test");
+        }
+    };
+
+
     class Assertion
     {
         friend class AssertionEnumerator;
@@ -181,14 +288,17 @@ namespace ostest
     {
         friend class Assertion;
         friend class TestRunner;
+        friend _ostest_internal::_MetadataItem;
 
     private:
-        TestResult result;
-        const TestInfo* info;
+        TestResult result{};
+        const TestInfo* info{};
+        mutable _ostest_internal::_MetadataItem* firstUserMetadataItem{};
+        mutable _ostest_internal::_MetadataItem* firstInternalMetadataItem{};
 
     protected:
         /* Creates (but does not register) a new Unit Test. */
-        inline UnitTest(const TestInfo& info) : result(), info(&info) { }
+        inline UnitTest(const TestInfo& info) : info(&info) { }
     public:
         virtual ~UnitTest() = default;
 
@@ -202,6 +312,22 @@ namespace ostest
 
         /* Gets the current TestResult for the current Unit Test. */
         inline const TestResult& getResult() const { return result; }
+
+        /* Gets the metadata with the given name, or returns nullptr if none exists. */
+        template<typename T>
+        Metadata<T>* getMetadata(const char* name) {
+            return reinterpret_cast<Metadata<T>*>(getMetadataRaw(name));
+        }
+        /* Gets the metadata with the given name, or returns nullptr if none exists. */
+        template<typename T>
+        const Metadata<T>* getMetadata(const char* name) const {
+            return reinterpret_cast<Metadata<T>*>(getMetadataRaw(name));
+        }
+
+    private:
+        void addMetadata(_ostest_internal::_MetadataItem& item, bool user=true);
+        void* getMetadataRaw(const char* name, bool user = true) const;
+        void removeMetadata(_ostest_internal::_MetadataItem& item, bool user = true);
     };
 
     /* Object representing Test Suites. */
@@ -245,6 +371,19 @@ namespace ostest
         }
     };
 
+    /* Internal interface managing test lifetimes. */
+    class ITestWrapper
+    {
+        friend class TestRunner;
+        friend class TestInfo;
+
+    protected:
+        virtual ::ostest::UnitTest& getTest() = 0;
+        virtual ::ostest::TestSuite& getSuite() = 0;
+        virtual void newInstance() = 0;
+        virtual void deleteInstance() = 0;
+    };
+
     /* Class containing unit test metadata. */
     class TestInfo : private _ostest_internal::_StaticLinkedList<TestInfo>
     {
@@ -271,24 +410,18 @@ namespace ostest
         // Default copy constructor
         TestInfo(const TestInfo& copy) noexcept = default;
 
+        /* Gets the metadata with the given name, or returns nullptr if none exists. */
+        template<typename T>
+        const Metadata<T>* getMetadata(const char* name) const {
+            return wrapper.getTest().getMetadata<T>(name);
+        }
+
     public:
         /* Creates and registers a new unit test with the given details.
            Returns the new test's test info.
         */
         static const TestInfo registerNew(const char* suiteName, const char* testName,
             ITestWrapper& wrapper, const char* file = __FILE__, int line = __LINE__);
-    };
-
-    /* Internal interface managing test lifetimes. */
-    class ITestWrapper
-    {
-        friend class TestRunner;
-
-    protected:
-        virtual ::ostest::UnitTest& getTest() = 0;
-        virtual ::ostest::TestSuite& getSuite() = 0;
-        virtual void newInstance() = 0;
-        virtual void deleteInstance() = 0;
     };
 }
 

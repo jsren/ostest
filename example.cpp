@@ -54,8 +54,8 @@ TEST(CustomSuite, TestWithLoop)
 
     while (this->testInt > 0)
     {
-        // EXPECT/ASSERT statements only log the condition from the final loop iteration
-        EXPECT_NONZERO(this->testInt);
+        // EXPECT_ONCE/ASSERT_ONCE statements only log the condition from the final loop iteration
+        EXPECT_NONZERO_ONCE(this->testInt);
 
 #if !OSTEST_NO_ALLOC
         // EXPECT_ALL/ASSERT_ALL will log the condition for all loop iterations.
@@ -63,6 +63,11 @@ TEST(CustomSuite, TestWithLoop)
         EXPECT_ALL(this->testInt % 2 == 0);
 #endif
         this->testInt--;
+
+        // EXPECT/ASSERT default to EXPECT_ALL/ASSERT_ALL, and so will log for each iteration.
+        // However, this when OSTEST_NO_ALLOC is set, EXPECT/ASSERT refer instead to
+        // EXPECT_ONCE/ASSERT_ONCE.
+        EXPECT_NONZERO(this->testInt);
     }
     ASSERT_ZERO(this->testInt);
 }
@@ -74,10 +79,9 @@ TEST(CustomSuite, TestWithLoopBreak)
 
     while (this->testInt > 0)
     {
-        // EXPECT/ASSERT statements only log the condition from the final loop iteration
         EXPECT_NONZERO(this->testInt);
 
-        // EXPECT(_ALL)_OR_BREAK will break if the expression is false
+        // EXPECT(_ALL/_ONCE)_OR_BREAK will break if the expression is false
         EXPECT_OR_BREAK(this->testInt % 2 == 0);
 
         // This is just syntactic sugar for the below:
@@ -100,6 +104,15 @@ TEST(CustomSuite, ExceptionTest)
     }
 }
 
+// Custom metadata can be added to tests to be used by 'handleTestComplete'
+TEST(CustomSuite, MetadataTest)
+{
+    // Metadata should be marked as static in order to persist once the test
+    // has completed
+    static Metadata<bool> meta(*this, "shouldFail", true);
+
+    ASSERT(true);
+}
 
 
 // Test suites can be declared within namespaces...
@@ -149,10 +162,19 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result)
     static const char* passStr = "PASS";
     static const char* failStr = "FAIL";
 
-    // Print test result
-    printf("[%s] [%s::%s] at %s:%i\n", result ? passStr : failStr, test.suiteName,
-        test.testName, test.file, test.line);
+    bool succeeded = result;
 
+    // Metadata (if present) is retrieved via 'getMetadata<T>'
+    const Metadata<bool>* shouldFail = test.getMetadata<bool>("shouldFail");
+
+    // Here we use it to check if the test was intended to fail
+    if (shouldFail != nullptr && shouldFail->value) {
+        succeeded = !succeeded;
+    }
+
+    // Print test result
+    printf("[%s] [%s::%s] at %s:%i\n", succeeded ? passStr : failStr, test.suiteName,
+        test.testName, test.file, test.line);
 
     auto first = result.getFirstFailure();
     auto final = result.getFinalFailure();

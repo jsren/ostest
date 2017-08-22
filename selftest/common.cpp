@@ -6,12 +6,6 @@
 
 using namespace ostest;
 
-static bool string_ends_with(const std::string& string, const std::string& suffix)
-{
-    return string.size() >= suffix.size() &&
-        string.compare(string.size()-suffix.size(), suffix.size(), suffix) == 0;
-}
-
 
 size_t countAssertions(const TestResult& result)
 {
@@ -23,7 +17,8 @@ size_t countAssertions(const TestResult& result)
 
 bool testShouldFail(const TestInfo& test)
 {
-    return string_ends_with(test.testName, "Fail");
+    auto* meta = test.getMetadata<TestExpect>("expect");
+    return meta && meta->value == TestExpect::AllFail;
 }
 
 bool allAssertionsFailed(const TestResult& result)

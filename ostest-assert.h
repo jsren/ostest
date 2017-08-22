@@ -177,6 +177,7 @@ namespace _ostest_internal
 #define ASSERT_ALL(expr) OSTEST_ASSERT_ALL(expr)
 #define EXPECT_ALL(expr) OSTEST_EXPECT_ALL(expr)
 #define EXPECT_OR_BREAK(expr) OSTEST_EXPECT_OR_BREAK(expr)
+#define EXPECT_ONCE_OR_BREAK(expr) OSTEST_EXPECT_ONCE_OR_BREAK(expr)
 #define EXPECT_ALL_OR_BREAK(expr) OSTEST_EXPECT_ALL_OR_BREAK(expr)
 
 #define ASSERT_ZERO(expr) OSTEST_ASSERT_ZERO(expr)

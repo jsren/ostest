@@ -1,8 +1,8 @@
 /* ostest.h - (c) 2017 James S Renwick */
 #pragma once
 
-#define OSTEST_VERSION 1   // Major version number of ostest
-#define OSTEST_REVISION 4  // Revision number of ostest
+#define OSTEST_VERSION 2   // Major version number of ostest
+#define OSTEST_REVISION 0  // Revision number of ostest
 
 
 /* When set, ostest will only include macros prefixed with OSTEST_

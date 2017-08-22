@@ -3,6 +3,12 @@
 #include <stddef.h>
 #include <string>
 
+enum class TestExpect
+{
+    AllPass,
+    AllFail
+};
+
 size_t countAssertions(const ostest::TestResult& result);
 
 bool testShouldFail(const ostest::TestInfo& test);

@@ -10,6 +10,21 @@
 #endif
 #endif
 
+
+namespace _ostest_internal
+{
+    _MetadataItem::_MetadataItem(ostest::UnitTest& test,
+        const char* name, void* item) : name(name), test(test), item(item)
+    {
+        test.addMetadata(*this);
+    }
+
+    _MetadataItem::~_MetadataItem() {
+        test.removeMetadata(*this);
+    }
+}
+
+
 namespace ostest
 {
     // Set feature flags
@@ -61,6 +76,56 @@ namespace ostest
             else if (s1[i] == s2[i] && s1[i] == '\0') return true;
         }
         return false;
+    }
+
+    // Typedef for convenience
+    typedef _ostest_internal::_MetadataItem MetadataItem;
+
+
+    void UnitTest::addMetadata(MetadataItem& item, bool user)
+    {
+        MetadataItem* root = user ? firstUserMetadataItem :
+            firstInternalMetadataItem;
+
+        if (root == nullptr) {
+            (user ? firstUserMetadataItem : firstInternalMetadataItem) = &item;
+        }
+        else
+        {
+            MetadataItem* last = root;
+            while (last->nextItem != nullptr) last = last->nextItem;
+            last->nextItem = &item;
+        }
+    }
+
+    void UnitTest::removeMetadata(MetadataItem& item, bool user)
+    {
+        MetadataItem* prev = user ? firstUserMetadataItem :
+            firstInternalMetadataItem;
+
+        if (prev == &item) {
+            (user ? firstUserMetadataItem : firstInternalMetadataItem)
+                = item.nextItem;
+            return;
+        }
+        while (prev != nullptr && prev->nextItem != &item) {
+            prev = prev->nextItem;
+        }
+        if (prev == nullptr) return;
+        else prev->nextItem = item.nextItem;
+    }
+
+    void* UnitTest::getMetadataRaw(const char* name, bool user) const
+    {
+        MetadataItem* item = user ? firstUserMetadataItem :
+            firstInternalMetadataItem;
+
+        while (item != nullptr)
+        {
+            if (streq(item->name, name)) return item->item;
+            else item = item->nextItem;
+        }
+        return nullptr;
     }
 
     // Creates a new assertion

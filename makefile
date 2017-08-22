@@ -12,4 +12,4 @@ clean:
 	rm ostest.o example.exe
 
 test: library
-	$(CXX) -Wall -Wextra -O3 -std=c++11 -I. ostest.o selftest/* -o test.exe
+	$(CXX) -Wall -Wextra -O3 -std=c++11 -I. ostest.o selftest/common.cpp selftest/assertion-test.cpp selftest/metadata-test.cpp -o test.exe
