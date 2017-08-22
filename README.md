@@ -32,6 +32,7 @@ a standard library\*, nor does it in fact require any memory allocation whatsoev
  * Simple, clean syntax
  * Cross-platform C++11, builds with GCC, Clang and MSVC
  * Run/filter specific tests
+ * Custom per-test metadata
  * and more...
 
 ## Building ##
