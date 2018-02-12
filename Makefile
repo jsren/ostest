@@ -16,7 +16,7 @@ endif
 endif
 # ------------------------------
 
-CFLAGS ?= -Wall -Wextra -O3 -std=c++11
+CFLAGS += -Wall -Wextra -O3 -std=c++11
 
 .PHONY: library example clean test all
 
@@ -32,4 +32,4 @@ test: library
 all: example test
 
 clean:
-	rm ostest.o example.exe test.exe
+	rm -f ostest.o example.exe test.exe

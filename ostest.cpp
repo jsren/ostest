@@ -214,7 +214,7 @@ namespace ostest
         this->itemCount = copy.itemCount;
         this->refCount  = copy.refCount;
 
-        (*refCount)++;
+        if (refCount != nullptr) { (*refCount)++; }
     }
 
     TestResult::~TestResult()

@@ -427,44 +427,46 @@ namespace ostest
 
 namespace _ostest_internal
 {
+    using size_t = decltype(sizeof(int));
+
     template<typename T>
     class _TestWrapper : public ::ostest::ITestWrapper
     {
     private:
-        bool alloc;
+        alignas(alignof(T)) char _data[sizeof(T)]{};
+        bool alloc{};
 
-        union Data {
-            alignas(alignof(T)) char _data[sizeof(T)]; T _obj;
-            inline Data() noexcept : _data() { } inline ~Data() { };
-        } data;
+        T& test() noexcept {
+            return *reinterpret_cast<T*>(_data);
+        }
 
     public:
-        inline _TestWrapper() : alloc(false) /*leave data uninitialised*/ { }
-        inline ~_TestWrapper() { deleteInstance(); }
+        _TestWrapper() = default;
+        ~_TestWrapper() { deleteInstance(); }
 
     protected:
         ::ostest::UnitTest& getTest() override
         {
             if (!alloc) newInstance();
-            return data._obj;
+            return test();
         }
         ::ostest::TestSuite& getSuite() override
         {
             if (!alloc) newInstance();
-            return data._obj;
+            return test();
         }
 
         void newInstance() override
         {
             if (alloc) deleteInstance();
 
-            new (data._data) T();
+            new ((void*)_data) T();
             alloc = true;
         }
 
         void deleteInstance() override
         {
-            if (alloc) return data._obj.T::~T();
+            if (alloc) return test().T::~T();
             alloc = false;
         }
     };
@@ -490,7 +492,7 @@ namespace _ostest_internal
             static ::_ostest_internal::_TestWrapper<_OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)> _wrapper; \
         public: \
             inline _OSTEST_CLS_NAME(suiteName, testName)() noexcept : ::ostest::UnitTest(info) { } \
-            inline void* operator new(size_t, void* where) noexcept { return where; } \
+            inline void* operator new(::_ostest_internal::size_t, void* where) noexcept { return where; } \
         protected: \
             virtual void testBody() override; \
         }; \
