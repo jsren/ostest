@@ -1,5 +1,5 @@
 
-# ostest (C) 2017 James S Renwick
+# ostest (C) 2018 James Renwick
 Operating System Unit Test Framework
 
 This utility and all associated source code remains the property of James S Renwick.
@@ -15,9 +15,9 @@ ostest is a relatively lightweight C++ unit testing framework similar to Google 
 The framework has been designed such that it has absolutely no dependencies - not even on
 a standard library\*, nor does it in fact require any memory allocation whatsoever\*\*.
 
-\* Except a definition of `size_t` and something to call the static initializers
+\* Except the basic ABI functions to call object initialisers
 
-\*\* Except where your compiler decides to emit it anyway. Set the OSTEST\_NO\_ALLOC preprocessor flag to disable allocation.
+\*\* Except where your compiler decides to emit it anyway.
 
 ## Features ##
  * Unit tests
@@ -42,6 +42,9 @@ and can be built as a standalone executable.
 
 An additional _selftest_ directory contains test files for testing the ostest library with itself.
 
+Profiles are sets of additional compiler flags designed to meet particular usage scenarios, such as
+barebones/OS or full user-mode applications.
+
 ### Preprocessor Flags ###
 The following preprocessor flags may be set when building the ostest library:
  * Define `OSTEST_NO_ALLOC` to prevent ostest from allocating memory
@@ -63,7 +66,7 @@ Available profiles can be found under the _profiles_ directory.
 `make all CXX=clang++ PROFILE=bare`
 
 ### With Visual Studio ###
-Include all .h and .cpp files in a project, build and run.
+Include all .hpp and .cpp files in a project, build and run.
 
 ## Example ##
 ```c++
@@ -85,8 +88,8 @@ TEST(ArithmeticSuite, AdditionTest)
 
     // Get test info
     const auto& test = this->getInfo();
-    printf("Running test %s::%s (%s:%d)\n", test.suiteName,
-        test.testName, test.file, test.line);
+    printf("Running test %s::%s (%s:%d)\n", test.suite.name,
+        test.name, test.file, test.line);
 
     // Get current result info
     const auto& result = this->getResult();
@@ -97,9 +100,11 @@ TEST(ArithmeticSuite, AdditionTest)
 }
 
 // Then to run:
-auto tests = ostest::getUnitTests();
-
-while (tests.next()) {
-    TestRunner(tests.current()).run();
+for (SuiteInfo& suiteInfo : ostest::getSuites())
+{
+    auto suite = suiteInfo.getSingletonSmartPtr();
+    for (auto& test : suiteInfo.tests()) {
+        auto result = TestRunner(*suite, test).run();
+    }
 }
 ```
