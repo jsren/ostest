@@ -1,5 +1,5 @@
-/* example.cpp - (c) 2017 James S Renwick */
-#include "ostest.h"
+/* example.cpp - (c) 2018 James Renwick */
+#include "ostest.hpp"
 #include <cstdio>
 #include <cstring>
 
@@ -13,7 +13,7 @@ TEST_SUITE(EmptySuite)
 // ...or can be created manually to enable overriding behaviour:
 class CustomSuite : public ::ostest::TestSuite
 {
-protected:
+public:
     int testInt = 0;
 
     CustomSuite() {
@@ -50,47 +50,47 @@ TEST(EmptySuite, EmptyTest)
 
 TEST(CustomSuite, TestWithLoop)
 {
-    ASSERT_NONZERO(this->testInt);
+    ASSERT_NONZERO(suite.testInt);
 
-    while (this->testInt > 0)
+    while (suite.testInt > 0)
     {
         // EXPECT_ONCE/ASSERT_ONCE statements only log the condition from the final loop iteration
-        EXPECT_NONZERO_ONCE(this->testInt);
+        EXPECT_NONZERO_ONCE(suite.testInt);
 
 #if !OSTEST_NO_ALLOC
         // EXPECT_ALL/ASSERT_ALL will log the condition for all loop iterations.
         // It requires memory allocation.
-        EXPECT_ALL(this->testInt % 2 == 0);
+        EXPECT_ALL(suite.testInt % 2 == 0);
 #endif
-        this->testInt--;
+        suite.testInt--;
 
         // EXPECT/ASSERT default to EXPECT_ALL/ASSERT_ALL, and so will log for each iteration.
         // However, this when OSTEST_NO_ALLOC is set, EXPECT/ASSERT refer instead to
         // EXPECT_ONCE/ASSERT_ONCE.
-        EXPECT_NONZERO(this->testInt);
+        EXPECT_NONZERO(suite.testInt);
     }
-    ASSERT_ZERO(this->testInt);
+    ASSERT_ZERO(suite.testInt);
 }
 
 
 TEST(CustomSuite, TestWithLoopBreak)
 {
-    ASSERT_NONZERO(this->testInt);
+    ASSERT_NONZERO(suite.testInt);
 
-    while (this->testInt > 0)
+    while (suite.testInt > 0)
     {
-        EXPECT_NONZERO(this->testInt);
+        EXPECT_NONZERO(suite.testInt);
 
         // EXPECT(_ALL/_ONCE)_OR_BREAK will break if the expression is false
-        EXPECT_OR_BREAK(this->testInt % 2 == 0);
+        EXPECT_OR_BREAK(suite.testInt % 2 == 0);
 
         // This is just syntactic sugar for the below:
-        bool expr = this->testInt % 2 == 0;
+        bool expr = suite.testInt % 2 == 0;
         EXPECT(expr); if (!expr) break;
 
-        this->testInt--;
+        suite.testInt--;
     }
-    ASSERT_ZERO(this->testInt);
+    ASSERT_ZERO(suite.testInt);
 }
 
 
@@ -140,19 +140,18 @@ int main()
     printf("\n");
     printf("ostest example application\n");
     printf("--------------------------------------\n");
-    printf("Version %d.%d (c) 2017 James S Renwick\n", OSTEST_VERSION, OSTEST_REVISION);
+    printf("Version %d.%d (c) 2018 James Renwick\n", OSTEST_VERSION, OSTEST_REVISION);
     printf("Built with: %s %s\n",
         ostest::ostest_no_alloc ? "OSTEST_NO_ALLOC" : "",
         ostest::ostest_std_exceptions ? "OSTEST_STD_EXCEPTIONS" : "");
     printf("\n");
 
-    // Gets all available unit tests
-    auto tests = ostest::getUnitTests();
-
-    // Creates a test runner to run the test.
-    // Results are reported in 'handleTestComplete.
-    while (tests.next()) {
-        auto result = TestRunner(tests.current()).run();
+    for (SuiteInfo& suiteInfo : ostest::getSuites())
+    {
+        auto suite = suiteInfo.getSingletonSmartPtr();
+        for (auto& test : suiteInfo.tests()) {
+            auto result = TestRunner(*suite, test).run();
+        }
     }
     return 0;
 }
@@ -175,33 +174,29 @@ void ostest::handleTestComplete(const TestInfo& test, const TestResult& result)
     }
 
     // Print test result
-    printf("[%s] [%s::%s] at %s:%i\n", succeeded ? passStr : failStr, test.suiteName,
-        test.testName, test.file, test.line);
+    printf("[%s] [%s::%s] at %s:%i\n", succeeded ? passStr : failStr,
+        test.suite.name, test.name, test.file, test.line);
 
     auto first = result.getFirstFailure();
     auto final = result.getFinalFailure();
 
     // Log test assertions & their results
-    auto assertions = result.getAssertions();
-    while (assertions.next())
+    for (auto& assert : result.getAssertions())
     {
-        const Assertion* assert = &assertions.current();
-
-        if (assert == first && assert == final) printf("  ONLY: ");
-        else if (assert == first) printf(" FIRST: ");
-        else if (assert == final) printf(" FINAL: ");
+        if (&assert == first && &assert == final) printf("  ONLY: ");
+        else if (&assert == first) printf(" FIRST: ");
+        else if (&assert == final) printf(" FINAL: ");
         else printf("\t");
 
-        printf("[%s] [%s:%i] \"%s\"\n", assert->passed() ? passStr : failStr, assert->file,
-            assert->line, assert->expression);
+        printf("[%s] [%s:%i] \"%s\"\n", assert.passed() ? passStr : failStr, assert.file,
+            assert.line, assert.expression);
 
         if (ostest::ostest_std_exceptions) {
-            if (strcmp(assert->expression, "<unhandled exception>") == 0) {
-                printf("\t   %s\n", assert->getMessage());
+            if (strcmp(assert.expression, "<unhandled exception>") == 0) {
+                printf("\t   %s\n", assert.getMessage());
             }
         }
     }
-
     // Newline separator
     printf("\n");
 }

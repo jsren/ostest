@@ -1,7 +1,7 @@
-/* ostest-assert.h - (c) James S Renwick 2016 */
+/* ostest-assert.hpp - (c) 2018 James Renwick */
 #pragma once
 
-#include "ostest-impl.h"
+#include "ostest-impl.hpp"
 
 
 namespace _ostest_internal

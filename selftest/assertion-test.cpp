@@ -1,4 +1,4 @@
-/* assertion-test.cpp - (c) 2017 James S Renwick */
+/* assertion-test.cpp - (c) 2018 James Renwick */
 #include "common.hpp"
 
 using namespace ostest;
@@ -293,23 +293,30 @@ namespace selftest
 
 TEST_SUITE(AssertionSuite)
 
+#include <cstring>
+
 TEST(AssertionSuite, AssertionsTest)
 {
-    auto tests = getUnitTests("_AssertionSuite");
-    while (tests.next())
+    for (auto& suite : getSuites())
     {
-        auto& test = tests.current();
-        auto result = TestRunner(test).run();
+        if (std::strcmp(suite.name, "_AssertionSuite") != 0) continue;
 
-        if (testShouldFail(test))
+        auto suiteInstance = suite.getSingletonSmartPtr();
+        for (auto& test : suite.tests())
         {
-            bool failed = !result.succeeded() && allAssertionsFailed(result);
-            printTestResult(test, failed, result);
-            EXPECT_ALL_OR_ASSERT(failed);
+            auto result = TestRunner(*suiteInstance, test).run();
+
+            if (testShouldFail(test))
+            {
+                bool failed = !result.succeeded() && allAssertionsFailed(result);
+                printTestResult(test, failed, result);
+                EXPECT_ALL_OR_ASSERT(failed);
+            }
+            else {
+                printTestResult(test, result.succeeded(), result);
+                EXPECT_ALL_OR_ASSERT(result.succeeded());
+            }
         }
-        else {
-            printTestResult(test, result.succeeded(), result);
-            EXPECT_ALL_OR_ASSERT(result.succeeded());
-        }
+        break;
     }
 }

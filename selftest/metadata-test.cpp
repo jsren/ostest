@@ -1,4 +1,4 @@
-/* metadata-test.cpp - (c) 2017 James S Renwick */
+/* metadata-test.cpp - (c) 2018 James Renwick */
 #include "common.hpp"
 #include <cstring>
 
@@ -193,25 +193,30 @@ static bool string_ends_with(const std::string& string, const std::string& suffi
         string.compare(string.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
+#include <cstring>
 
 TEST(MetadataSuite, MetadataTests)
 {
-    auto tests = getUnitTests("_MetadataSuite");
-    while (tests.next())
+    for (auto& suiteInfo : getSuites())
     {
-        auto& test = tests.current();
-        auto result = TestRunner(test).run();
+        if (std::strcmp(suiteInfo.name, "_MetadataSuite") != 0) continue;
 
-        // If test should fail (shouldn't use metadata here)
-        if (string_ends_with(test.testName, "Fail"))
+        auto suite = suiteInfo.getSingletonSmartPtr();
+        for (auto& test : suiteInfo.tests())
         {
-            bool failed = !result.succeeded() && allAssertionsFailed(result);
-            printTestResult(test, failed, result);
-            EXPECT_ALL_OR_ASSERT(failed);
-        }
-        else {
-            printTestResult(test, result.succeeded(), result);
-            EXPECT_ALL_OR_ASSERT(result.succeeded());
+            auto result = TestRunner(*suite, test).run();
+
+            // If test should fail (shouldn't use metadata here)
+            if (string_ends_with(test.name, "Fail"))
+            {
+                bool failed = !result.succeeded() && allAssertionsFailed(result);
+                printTestResult(test, failed, result);
+                EXPECT_ALL_OR_ASSERT(failed);
+            }
+            else {
+                printTestResult(test, result.succeeded(), result);
+                EXPECT_ALL_OR_ASSERT(result.succeeded());
+            }
         }
     }
 }

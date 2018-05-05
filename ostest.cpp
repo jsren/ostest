@@ -1,5 +1,5 @@
-/* ostest.cpp - (c) 2017 James S Renwick */
-#include "ostest-impl.h"
+/* ostest.cpp - (c) 2018 James S Renwick */
+#include "ostest-impl.hpp"
 
 // Headers required for standard library exceptions
 #if OSTEST_STD_EXCEPTIONS
@@ -171,32 +171,6 @@ namespace ostest
         return result;
     }
 
-    bool AssertionEnumerator::next()
-    {
-        // Handle first element
-        if (initial)
-        {
-            initial = false;
-            return item != nullptr;
-        }
-        else if (item != nullptr && item->nextItem != nullptr)
-        {
-            item = item->nextItem;
-            return true;
-        }
-        else return false;
-    }
-
-    bool AssertionEnumerator::previous()
-    {
-        if (item != nullptr && item->prevItem)
-        {
-            item = item->prevItem;
-            return true;
-        }
-        else return false;
-    }
-
 #if OSTEST_NO_ALLOC
     TestResult::TestResult() = default;
     TestResult::TestResult(const TestResult&) = default;
@@ -244,95 +218,75 @@ namespace ostest
 
     bool TestResult::succeeded() const
     {
-        AssertionEnumerator assertions(this->firstItem);
-
-        while (assertions.next()) {
-            if (!assertions.current().passed()) return false;
+        for (auto& assertion : AssertionIterator(this->firstItem)) {
+            if (!assertion.passed()) return false;
         }
         return true;
     }
 
     const Assertion* TestResult::getFirstFailure() const
     {
-        AssertionEnumerator assertions(this->firstItem);
-
-        while (assertions.next()) {
-            if (!assertions.current().passed()) return &assertions.current();
+        for (auto& assertion : AssertionIterator(this->firstItem)) {
+            if (!assertion.passed()) return &assertion;
         }
         return nullptr;
     }
 
     const Assertion* TestResult::getFinalFailure() const
     {
-        AssertionEnumerator assertions(this->firstItem);
-
         const Assertion* final = nullptr;
 
-        while (assertions.next()) {
-            if (!assertions.current().passed()) final = &assertions.current();
+        for (auto& assertion : AssertionIterator(this->firstItem)) {
+            if (!assertion.passed()) final = &assertion;
         }
-
         return final;
+    }
+
+    SuiteUniquePtr::SuiteUniquePtr(SuiteInfo& info)
+        : info(info), instance(info.construct()) { }
+
+    SuiteUniquePtr::~SuiteUniquePtr() {
+        info.destruct();
+    }
+
+
+    SuiteInfo::SuiteInfo(void* ptr, ctor constructor, dtor destructor, const char* name)
+        : ptr(ptr), constructor(constructor), destructor(destructor), name(name)
+    {
+        if (firstItem == nullptr) firstItem = this;
+        else if (finalItem != nullptr) finalItem->nextItem = this;
+        finalItem = this;
+        itemCount++;
     }
 
     /* Creates and registers a new unit test with the given details.
        Returns the new test's test info.
     */
-    const TestInfo TestInfo::registerNew(const char* suiteName, const char* testName,
-        ITestWrapper& wrapper, const char* file, int line)
+    TestInfo TestInfo::registerNew(SuiteInfo& suite, const char* name,
+        UnitTestWrapper& wrapper, const char* file, int line)
     {
-        itemCount++;
-        return TestInfo(suiteName, testName, wrapper, file, line);
+        return TestInfo(suite, name, wrapper, file, line);
     }
 
-    TestInfo::TestInfo(const char* suiteName, const char* testName,
-        ITestWrapper& wrapper, const char* file, int line)
-        : wrapper(wrapper), line(line), file(file),
-        suiteName(suiteName), testName(testName)
+    TestInfo::TestInfo(SuiteInfo& suite, const char* name,
+        UnitTestWrapper& wrapper, const char* file, int line)
+        : wrapper(wrapper), line(line), suite(suite), name(name), file(file)
     {
-        // Update linked list
-        if (firstItem == nullptr) firstItem = this;
-        if (finalItem != nullptr) finalItem->nextItem = this;
-        finalItem = this;
+        // Register test with suite
+        suite._tests.addItem(this);
     }
-
-
-    bool TestEnumerator::next()
-    {
-        // Handle first element
-        if (initial) {
-            item = TestInfo::firstItem; initial = false;
-        }
-        else if (item != nullptr) {
-            item = item->nextItem;
-        }
-
-        // Handle suite filter
-        if (suite != nullptr)
-        {
-            while (item != nullptr)
-            {
-                if (streq(suite, item->suiteName)) return true;
-                else item = item->nextItem;
-            }
-        }
-
-        return item != nullptr;
-    }
-
 
     TestResult TestRunner::run()
     {
         // Get the test and suite instances
-        UnitTest& test = info.wrapper.getTest();
-        TestSuite& suite = info.wrapper.getSuite();
+        UnitTest& test = info.wrapper.getInstance();
 
         // Perform testing
         suite.setUp();
 
 #if OSTEST_STD_EXCEPTIONS
         try {
-            test.testBody();
+            test.run(suite);
         }
         catch (const std::exception& e) {
             (new NoExceptionAssertion(e, test.getInfo()))->evaluate(test, false);
@@ -353,17 +307,22 @@ namespace ostest
             (new NoExceptionAssertion(std::exception(), test.getInfo()))->evaluate(test, false);
         }
 #else
-        test.testBody();
+        test.run(suite);
 #endif
         suite.tearDown();
 
         // Clean up
-        auto result = test.result;
+        TestResult result = test.result;
         info.wrapper.deleteInstance();
 
         // Notify test complete
         ::ostest::handleTestComplete(info, result);
         return result;
+    }
+
+    SuiteIterator getSuites() noexcept
+    {
+        return SuiteIterator{SuiteInfo::firstItem};
     }
 
 
@@ -414,6 +373,4 @@ namespace ostest
     }
 
 #endif
-
-
 }

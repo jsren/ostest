@@ -1,6 +1,6 @@
-/* common.cpp - (c) 2017 James S Renwick */
+/* common.cpp - (c) 2018 James Renwick */
 #include "common.hpp"
-#include <ostest.h>
+#include <ostest.hpp>
 #include <cstring>
 #include <stdio.h>
 
@@ -9,9 +9,11 @@ using namespace ostest;
 
 size_t countAssertions(const TestResult& result)
 {
-    auto enum_ = result.getAssertions();
     size_t assertionCount = 0;
-    while (enum_.next()) assertionCount++;
+    for (auto& _: result.getAssertions()) {
+        (void)_;
+        assertionCount++;
+    }
     return assertionCount;
 }
 
@@ -23,9 +25,8 @@ bool testShouldFail(const TestInfo& test)
 
 bool allAssertionsFailed(const TestResult& result)
 {
-    auto enum_ = result.getAssertions();
-    while (enum_.next()) {
-        if (enum_.current().passed()) return false;
+    for (auto& assert : result.getAssertions()) {
+        if (assert.passed()) return false;
     }
     return true;
 }
@@ -38,20 +39,17 @@ void printTestResult(const TestInfo& test, bool succeeded, const TestResult& res
     if (succeeded)
     {
         // Print test result
-        printf("[PASS] [%s::%s] at %s:%i\n", test.suiteName,
-            test.testName, test.file, test.line);
+        printf("[PASS] [%s::%s] at %s:%i\n", test.suite.name,
+            test.name, test.file, test.line);
     }
     else
     {
         // Print test result
-        printf("[FAIL] [%s::%s] unexpected %s at %s:%i\n", test.suiteName,
-            test.testName, result ? passStr : failStr, test.file, test.line);
+        printf("[FAIL] [%s::%s] unexpected %s at %s:%i\n", test.suite.name,
+            test.name, result ? passStr : failStr, test.file, test.line);
 
-        auto enum_ = result.getAssertions();
-        while (enum_.next())
-        {
-            auto& assertion = enum_.current();
-            printf("\t\"%s\" at %s:%i\n", assertion.getMessage(), assertion.file, assertion.line);
+        for (auto& assert : result.getAssertions()) {
+            printf("\t\"%s\" at %s:%i\n", assert.getMessage(), assert.file, assert.line);
         }
     }
 }
@@ -59,14 +57,16 @@ void printTestResult(const TestInfo& test, bool succeeded, const TestResult& res
 
 int main()
 {
-    auto tests = ostest::getUnitTests();
-    while (tests.next())
+    for (SuiteInfo& suiteInfo : ostest::getSuites())
     {
-        auto& test = tests.current();
-        // Skip internal tests
-        if (std::strlen(test.suiteName) > 0 && test.suiteName[0] == '_') continue;
-        // Run normal tests
-        TestRunner(test).run();
+        auto suite = suiteInfo.getSingletonSmartPtr();
+        for (auto& test : suiteInfo.tests())
+        {
+            // Skip internal tests
+            if (std::strlen(test.suite.name) > 0 && test.suite.name[0] == '_') continue;
+            // Run normal tests
+            TestRunner(*suite, test).run();
+        }
     }
     return 0;
 }

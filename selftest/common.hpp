@@ -1,5 +1,5 @@
-/* common.hpp - (c) 2017 James S Renwick */
-#include <ostest.h>
+/* common.hpp - (c) 2018 James Renwick */
+#include <ostest.hpp>
 #include <stddef.h>
 #include <string>
 
