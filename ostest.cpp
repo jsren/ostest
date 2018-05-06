@@ -278,15 +278,15 @@ namespace ostest
 
     TestResult TestRunner::run()
     {
-        // Get the test and suite instances
-        UnitTest& test = info.wrapper.getInstance();
+        // Get the test instance
+        UnitTest& test = info.wrapper.newInstance(suite);
 
         // Perform testing
         suite.setUp();
 
 #if OSTEST_STD_EXCEPTIONS
         try {
-            test.run(suite);
+            test.testBody();
         }
         catch (const std::exception& e) {
             (new NoExceptionAssertion(e, test.getInfo()))->evaluate(test, false);
@@ -307,7 +307,7 @@ namespace ostest
             (new NoExceptionAssertion(std::exception(), test.getInfo()))->evaluate(test, false);
         }
 #else
-        test.run(suite);
+        test.testBody();
 #endif
         suite.tearDown();
 

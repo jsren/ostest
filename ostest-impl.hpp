@@ -377,14 +377,14 @@ namespace ostest
 
     protected:
         /* The Unit Test body. */
-        virtual void run(TestSuite& suite) = 0;
+        virtual void testBody() = 0;
 
     public:
         /* Gets TestInfo for the current Unit Test. */
-        inline const TestInfo& getInfo() const { return *info; }
+        inline const TestInfo& getInfo() const noexcept { return *info; }
 
         /* Gets the current TestResult for the current Unit Test. */
-        inline const TestResult& getResult() const { return result; }
+        inline const TestResult& getResult() const noexcept { return result; }
 
         /* Gets the metadata with the given name, or returns nullptr if none exists. */
         template<typename T>
@@ -431,7 +431,8 @@ namespace ostest
 
     protected:
         virtual UnitTest& getInstance() = 0;
-        virtual void newInstance() = 0;
+        virtual bool hasInstance() noexcept = 0;
+        virtual UnitTest& newInstance(TestSuite&) = 0;
         virtual void deleteInstance() = 0;
     };
 
@@ -587,20 +588,22 @@ namespace _ostest_internal
         ~_InstanceWrapper() { deleteInstance(); }
 
     protected:
-        T& getInstance() override
-        {
-            if (_ptr == nullptr) newInstance();
+        T& getInstance() override final {
             return *_ptr;
         }
 
-        void newInstance() override
-        {
-            if (_ptr != nullptr) deleteInstance();
-            _ptr = new ((void*)_data) T();
+        bool hasInstance() noexcept override final {
+            return _ptr != nullptr;
         }
 
-        void deleteInstance() override
+        T& newInstance(ostest::TestSuite& suite) override final
         {
+            if (_ptr != nullptr) deleteInstance();
+            _ptr = new ((void*)_data) T(suite);
+            return *_ptr;
+        }
+
+        void deleteInstance() override final {
             if (_ptr != nullptr) return _ptr->T::~T();
         }
     };
@@ -624,11 +627,12 @@ namespace _ostest_internal
             static const ostest::TestInfo info; \
             static ::_ostest_internal::_InstanceWrapper<_OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)> _wrapper; \
         public: \
-            inline _OSTEST_CLS_NAME(suiteName, testName)() noexcept : ::ostest::UnitTest(info) { } \
+            inline _OSTEST_CLS_NAME(suiteName, testName)(::ostest::TestSuite& suite) noexcept \
+                : ::ostest::UnitTest(info), suite(reinterpret_cast<suiteClass&>(suite)) { } \
             inline void* operator new(::_ostest_internal::size_t, void* where) noexcept { return where; } \
         protected: \
-            void testBody(suiteClass&); \
-            inline void run(::ostest::TestSuite& suite) override final { testBody(reinterpret_cast<suiteClass&>(suite)); } \
+            suiteClass& suite; \
+            void testBody() override final; \
         }; \
     } \
     ::_ostest_internal::_InstanceWrapper<_OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)> _OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::_wrapper{}; \
@@ -638,7 +642,7 @@ namespace _ostest_internal
         #testName, static_cast<::ostest::UnitTestWrapper&>(_OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::_wrapper), \
         __FILE__, __LINE__); \
     \
-    void _OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::testBody([[maybe_unused]] suiteClass& suite)
+    void _OSTEST_NS::_OSTEST_CLS_NAME(suiteName, testName)::testBody()
 
 
 

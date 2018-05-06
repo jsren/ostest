@@ -2,7 +2,7 @@
 #pragma once
 
 #define OSTEST_VERSION 3   // Major version number of ostest
-#define OSTEST_REVISION 0  // Revision number of ostest
+#define OSTEST_REVISION 1  // Revision number of ostest
 
 
 /* When set, ostest will only include macros prefixed with OSTEST_
