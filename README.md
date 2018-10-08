@@ -1,5 +1,5 @@
 
-# ostest (C) 2018 James Renwick
+# ostest (C) 2016-2018 James Renwick
 Operating System Unit Test Framework
 
 This utility and all associated source code remains the property of James S Renwick.

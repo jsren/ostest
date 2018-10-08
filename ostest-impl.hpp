@@ -1,4 +1,4 @@
-/* ostest-impl.hpp - (c) 2018 James Renwick */
+/* ostest-impl.hpp - (c) 2016-2018 James Renwick */
 #pragma once
 
 namespace ostest
@@ -165,8 +165,8 @@ namespace _ostest_internal
     public:
         _LinkedListIterator() = default;
 
-        _LinkedListIterator(const _LinkedListIterator& other) noexcept
-            : nextItem(other.nextItem) { }
+        _LinkedListIterator(const _LinkedListIterator& other) = default;
+        _LinkedListIterator& operator =(const _LinkedListIterator& other) noexcept = delete;
 
         _LinkedListIterator& operator ++() noexcept {
             nextItem = nextItem->nextItem; return *this;
@@ -200,12 +200,11 @@ namespace ostest
     public:
         T value{};
 
-    private:
+    public:
         Metadata() = delete;
         Metadata& operator=(const Metadata&) = delete;
         Metadata& operator=(Metadata&&) = delete;
 
-    public:
         /* Creates a new metadata instance. */
         template<typename Test>
         Metadata(Test& test, const char* name) :
@@ -317,10 +316,13 @@ namespace ostest
 
     public:
         TestResult();
-        TestResult(const TestResult& copy);
+        TestResult(const TestResult& other);
+        TestResult(TestResult&& other);
         ~TestResult();
 
-    public:
+        TestResult& operator=(const TestResult& other);
+        TestResult& operator=(TestResult&& other);
+
         /* Returns true if the test succeeded. False otherwise. */
         bool succeeded() const;
 
@@ -338,6 +340,9 @@ namespace ostest
         inline operator bool() const {
             return succeeded();
         }
+
+    private:
+        void destroy();
     };
 
 

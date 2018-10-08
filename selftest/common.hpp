@@ -6,12 +6,18 @@
 enum class TestExpect
 {
     AllPass,
-    AllFail
+    AllFail,
+    SomeFail
 };
 
 size_t countAssertions(const ostest::TestResult& result);
 
-bool testShouldFail(const ostest::TestInfo& test);
+bool testPassed(const ostest::TestInfo& test, const ostest::TestResult& result);
+
+bool assertionShouldFail(const ostest::TestInfo& test,
+    const ostest::Assertion& target);
+
+TestExpect getTestFailRequirement(const ostest::TestInfo& test);
 
 bool allAssertionsFailed(const ostest::TestResult& result);
 

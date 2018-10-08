@@ -305,17 +305,10 @@ TEST(AssertionSuite, AssertionsTest)
         for (auto& test : suite.tests())
         {
             auto result = TestRunner(*suiteInstance, test).run();
+            bool succeeded = testPassed(test, result);
 
-            if (testShouldFail(test))
-            {
-                bool failed = !result.succeeded() && allAssertionsFailed(result);
-                printTestResult(test, failed, result);
-                EXPECT_ALL_OR_ASSERT(failed);
-            }
-            else {
-                printTestResult(test, result.succeeded(), result);
-                EXPECT_ALL_OR_ASSERT(result.succeeded());
-            }
+            printTestResult(test, succeeded, result);
+            EXPECT_ALL_OR_ASSERT(succeeded);
         }
         break;
     }

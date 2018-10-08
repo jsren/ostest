@@ -1,4 +1,4 @@
-/* ostest-assert.hpp - (c) 2018 James Renwick */
+/* ostest-assert.hpp - (c) 2016-2018 James Renwick */
 #pragma once
 
 #include "ostest-impl.hpp"

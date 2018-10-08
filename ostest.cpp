@@ -1,4 +1,4 @@
-/* ostest.cpp - (c) 2018 James S Renwick */
+/* ostest.cpp - (c) 2016-2018 James S Renwick */
 #include "ostest-impl.hpp"
 
 // Headers required for standard library exceptions
@@ -174,11 +174,27 @@ namespace ostest
 #if OSTEST_NO_ALLOC
     TestResult::TestResult() = default;
     TestResult::TestResult(const TestResult&) = default;
+    TestResult::TestResult(TestResult&&) = default;
+    TestResult& TestResult::operator =(const TestResult&) = default;
+    TestResult& TestResult::operator =(TestResult&&) = default;
     TestResult::~TestResult() = default;
 #else
     TestResult::TestResult() : refCount(new unsigned int(1))
     {
 
+    }
+
+    TestResult::TestResult(TestResult&& other)
+    {
+        this->firstItem = other.firstItem;
+        this->finalItem = other.finalItem;
+        this->itemCount = other.itemCount;
+        this->refCount  = other.refCount;
+
+        other.firstItem = nullptr;
+        other.finalItem = nullptr;
+        other.itemCount = 0;
+        other.refCount = nullptr;
     }
 
     TestResult::TestResult(const TestResult& copy)
@@ -191,7 +207,44 @@ namespace ostest
         if (refCount != nullptr) { (*refCount)++; }
     }
 
-    TestResult::~TestResult()
+    TestResult& TestResult::operator =(const TestResult& other)
+    {
+        if (&other == this) return *this; // Do nothing if same object
+
+        this->destroy(); // Destroy existing result
+
+        this->firstItem = other.firstItem;
+        this->finalItem = other.finalItem;
+        this->itemCount = other.itemCount;
+        this->refCount  = other.refCount;
+
+        if (refCount != nullptr) { (*refCount)++; }
+        return *this;
+    }
+
+    TestResult& TestResult::operator =(TestResult&& other)
+    {
+        if (&other == this) return *this; // Do nothing if same object
+
+        auto firstItem = this->firstItem;
+        auto finalItem = this->finalItem;
+        auto itemCount = this->itemCount;
+        auto refCount = this->refCount;
+
+        this->firstItem = other.firstItem;
+        this->finalItem = other.finalItem;
+        this->itemCount = other.itemCount;
+        this->refCount  = other.refCount;
+
+        other.firstItem = firstItem;
+        other.finalItem = finalItem;
+        other.itemCount = itemCount;
+        other.refCount = refCount;
+
+        return *this;
+    }
+
+    void TestResult::destroy()
     {
         // This is the case upon move
         if (this->refCount != nullptr)
@@ -213,6 +266,11 @@ namespace ostest
                 }
             }
         }
+    }
+
+    TestResult::~TestResult()
+    {
+        this->destroy();
     }
 #endif
 

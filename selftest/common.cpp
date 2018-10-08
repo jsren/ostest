@@ -17,10 +17,45 @@ size_t countAssertions(const TestResult& result)
     return assertionCount;
 }
 
-bool testShouldFail(const TestInfo& test)
+TestExpect getTestFailRequirement(const TestInfo& test)
 {
     auto* meta = test.getMetadata<TestExpect>("expect");
-    return meta && meta->value == TestExpect::AllFail;
+    return meta ? meta->value : TestExpect::AllPass;
+}
+
+bool assertionShouldFail(const TestInfo& test, const Assertion& target)
+{
+    auto* fails = test.getMetadata<Assertion**>("fails");
+    if (!fails) return false;
+
+    for (Assertion** stmt = fails->value; *stmt != nullptr; stmt++) {
+        if (*stmt == &target) return true;
+    }
+    return false;
+}
+
+bool testPassed(const TestInfo& test, const TestResult& result)
+{
+    auto req = getTestFailRequirement(test);
+
+    if (req == TestExpect::AllPass) {
+        return result.succeeded();
+    }
+    else if (req == TestExpect::AllFail) {
+        return !result.succeeded() && allAssertionsFailed(result);
+    }
+    else if (req == TestExpect::SomeFail)
+    {
+        for (auto& assertion : result.getAssertions())
+        {
+            bool shouldFail = assertionShouldFail(test, assertion);
+            if (assertion.passed() != !shouldFail) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 bool allAssertionsFailed(const TestResult& result)
